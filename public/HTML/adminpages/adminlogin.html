@@ -27,7 +27,7 @@
             <div class="card-body text-center">
                 <h1 class="text-light">LOG <span class="text-info">IN</span></h1>
                 <h6 style="color: #ffffff;">Welcome to Agriconnect Admin</h6>
-                <form action="/adminlogin" method="POST">
+                <form id="loginForm" action="/adminlogin" method="POST">
                     <div class="form-group">
                         <input type="email" class="form-control" name="email" placeholder="Email" required>
                     </div>
@@ -36,12 +36,10 @@
                     </div>
                     <button type="submit" class="btn btn-outline-info btn-block" style="border-radius: 20px;">LOGIN</button>
                 </form>
-                <!-- Error message container below the button -->
                 <div class="text-danger error-message"></div> 
             </div>
         </div>
     </div>
-    <!-- Bootstrap JS and dependencies -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
@@ -51,6 +49,18 @@
         if (errorMessage) {
             document.querySelector('.error-message').textContent = errorMessage;
         }
+        function resetFormFields() {
+            document.getElementById('loginForm').reset();
+        }
+
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                resetFormFields();
+                fetch('/clearAdminSession', {
+                method: 'POST'
+        });
+            }
+        });
     </script>
 </body>
 </html>

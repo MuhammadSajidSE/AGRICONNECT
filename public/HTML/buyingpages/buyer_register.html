@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buyer Register</title>
     <!-- Bootstrap CSS -->
-    
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body, html {
@@ -91,15 +90,37 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
+        // Function to reset form fields
+        function resetFormFields() {
+            document.getElementById('registration-form').reset();
+        }
+
         // Check if there's an error message in the URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         const errorMessage = urlParams.get('error');
     
         // If there's an error message, display it
         if (errorMessage) {
-            document.getElementById('error-message').textContent = errorMessage;
-            document.getElementById('error-message').style.display = 'block'; // Ensure error message is displayed
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = errorMessage;
+            errorDiv.style.display = 'block'; // Ensure error message is displayed
         }
+
+        // Event listener for pageshow to clear session on back navigation
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                resetFormFields();
+                fetch('/clearbuyersession', {
+                    method: 'POST'
+                }).then(response => {
+                    if (!response.ok) {
+                        console.error('Failed to clear session');
+                    }
+                }).catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+        });
     </script>
 </body>
 </html>

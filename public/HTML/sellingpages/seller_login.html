@@ -27,8 +27,7 @@
             <div class="card-body text-center">
                 <h1 class="text-light">LOG <span class="text-info">IN</span></h1>
                 <h6 style="color: #ffffff;">Welcome to Agriconnect Buyer</h6>
-                <form action="/seller_login" method="POST">
-                    <div id="error-message" class="error-message"></div> <!-- Placeholder for error message -->
+                <form action="/buyer_login" method="POST">
                     <div class="form-group">
                         <input type="email" class="form-control" name="email" placeholder="Email" required>
                     </div>
@@ -37,6 +36,7 @@
                     </div>
                     <button type="submit" class="btn btn-outline-info btn-block" style="border-radius: 20px;">LOGIN</button>
                 </form>
+                <div class="text-danger error-message"></div> 
             </div>
         </div>
     </div>
@@ -44,5 +44,31 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const errorMessage = urlParams.get('error');
+        if (errorMessage) {
+            document.querySelector('.error-message').textContent = errorMessage;
+        }
+
+        function resetFormFields() {
+            document.querySelector('form').reset();
+        }
+
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                resetFormFields();
+                fetch('/clearsellersession', {
+                    method: 'POST'
+                }).then(response => {
+                    if (!response.ok) {
+                        console.error('Failed to clear session');
+                    }
+                }).catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+        });
+    </script>
 </body>
 </html>

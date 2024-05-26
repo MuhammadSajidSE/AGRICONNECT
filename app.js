@@ -1,9 +1,16 @@
 const path = require('path');
 const port = 3001;
 const express = require("express");
+const session = require('express-session');
 const oracledb = require("oracledb");
 const app = express();
 app.use(express.json());
+app.use(session({
+  secret: 'your-secret-key',
+  resave: false,
+  saveUninitialized: true
+}));
+
 app.use(express.urlencoded({ extended: true }));
 async function connectToDatabase() {
   const connection = await oracledb.getConnection({
@@ -63,6 +70,8 @@ async function connectToDatabase() {
             res.redirect('/buyer_register?error=Email%20already%20exists');
         } else {
             await buyer_registers(buyer_register);
+            req.session.isbuyerLoggedIn = true;
+            req.session.buyerType = 'buyer';
             res.redirect('/mainbuying');
         }
     } catch (error) {
@@ -120,6 +129,8 @@ app.post("/seller_register", async (req, res) => {
           res.redirect('/seller_register?error=Email%20already%20exists');
       } else {
           await seller_registers(sell_register);
+          req.session.issellerLoggedIn = true;
+          req.session.sellerType = 'seller';
           res.redirect('/seller_view');
       }
   } catch (error) {
@@ -129,7 +140,6 @@ app.post("/seller_register", async (req, res) => {
 });
 
 // login codes 
-
 app.post('/adminlogin', async (req, res) => {
   const { email, password } = req.body;
   console.log('Received login request:', { email, password });
@@ -142,9 +152,11 @@ app.post('/adminlogin', async (req, res) => {
     );
     console.log('Query result:', result);
     if (result.rows.length > 0) {
+      req.session.isAdminLoggedIn = true;
+      req.session.adminType = 'admin';
       res.redirect('/admin_dashboard');
     } else {
-      res.redirect('/adminlogin?error=Invalid%20Eamil%20or%20Password');
+      res.redirect('/adminlogin?error=Invalid%20Email%20or%20Password');
     }
 
     await connection.close();
@@ -153,7 +165,6 @@ app.post('/adminlogin', async (req, res) => {
     res.status(500).send("An error occurred");
   }
 });
-
 
 app.post('/buyer_login', async (req, res) => {
   const { email, password } = req.body;
@@ -168,9 +179,11 @@ app.post('/buyer_login', async (req, res) => {
     );
     console.log('Query result:', result);
     if (result.rows.length > 0) {
+      req.session.isbuyerLoggedIn = true;
+      req.session.buyerType = 'buyer';
       res.redirect('/buyer_dashboard');
     } else {
-      res.status(401).send("Invalid credentials");
+      res.redirect('/buyer_login?error=Invalid%20Eamil%20or%20Password');
     }
 
     await connection.close();
@@ -193,6 +206,8 @@ app.post('/seller_login', async (req, res) => {
     );
     console.log('Query result:', result);
     if (result.rows.length > 0) {
+      req.session.issellerLoggedIn = true;
+      req.session.sellerType = 'seller';
       res.redirect('/buyer_dashboard');
     } else {
       res.status(401).send("Invalid credentials");
@@ -204,6 +219,49 @@ app.post('/seller_login', async (req, res) => {
     res.status(500).send("An error occurred");
   }
 });
+
+
+app.post('/clearAdminSession', (req, res) => {
+  delete req.session.isAdminLoggedIn;
+  delete req.session.adminType;
+  res.sendStatus(200);
+});
+
+app.post('/clearsellersession', (req, res) => {
+  delete req.session.issellerLoggedIn;
+  delete req.session.sellerType;
+  res.sendStatus(200);
+});
+
+app.post('/clearbuyersession', (req, res) => {
+  delete req.session.isbuyerLoggedIn;
+  delete req.session.buyerType;
+  res.sendStatus(200);
+});
+
+function requireAdmin(req, res, next) {
+  if (req.session.isAdminLoggedIn && req.session.adminType === 'admin') {
+    next();
+  } else {
+    res.redirect('/adminlogin'); 
+  }
+}
+
+function requireseller(req, res, next) {
+  if (req.session.issellerLoggedIn && req.session.sellerType === 'seller') {
+    next();
+  } else {
+    res.redirect('/seller_login'); 
+  }
+}
+
+function requirebuyer(req, res, next) {
+  if (req.session.isbuyerLoggedIn && req.session.buyerType === 'buyer') {
+    next();
+  } else {
+    res.redirect('/buyer_login'); 
+  }
+}
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -226,24 +284,24 @@ app.get('/seller_login', (req, res) => {
 app.get('/seller_register', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'HTML','sellingpages', 'seller_register.html'));
 });
-app.get('/add_crop', (req, res) => {
+app.get('/add_crop',requireseller, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'HTML','sellingpages', 'add_crop.html'));
 });
-app.get('/seller_view', (req, res) => {
+app.get('/seller_view',requireseller, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'HTML','sellingpages', 'seller_view.html'));
 });
 
 //adminpages
-app.get('/adminlogin', (req, res) => {
+app.get('/adminlogin',(req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'HTML','adminpages', 'adminlogin.html'));
 });
-app.get('/admin_dashboard', (req, res) => {
+app.get('/admin_dashboard',requireAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'HTML','adminpages', 'admin_dashboard.html'));
 });
 
 
 //Buyingpages
-app.get('/mainbuying', (req, res) => {
+app.get('/mainbuying',requirebuyer, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'HTML','buyingpages', 'mainbuying.html'));
 });
 app.get('/buyer_register', (req, res) => {
@@ -252,10 +310,10 @@ app.get('/buyer_register', (req, res) => {
 app.get('/buyer_login', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'HTML','buyingpages', 'buyer_login.html'));
 });
-app.get('/crop_detail', (req, res) => {
+app.get('/crop_detail',requirebuyer, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'HTML','buyingpages', 'crop_detail.html'));
 });
-app.get('/buyer_dashboard', (req, res) => {
+app.get('/buyer_dashboard',requirebuyer, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'HTML','buyingpages', 'buyer_dashboard.html'));
 });
 

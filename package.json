@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "express": "^4.19.2",
+    "express-session": "^1.18.0",
     "oracledb": "^5.4.0"
   }
 }
