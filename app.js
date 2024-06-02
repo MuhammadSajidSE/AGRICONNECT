@@ -3,6 +3,7 @@ const port = 3001;
 const express = require("express");
 const session = require('express-session');
 const oracledb = require("oracledb");
+const notifier = require('node-notifier');
 const app = express();
 app.use(express.json());
 app.use(session({
@@ -84,7 +85,7 @@ async function seller_registers(seller_data) {
   try {
       const connection = await connectToDatabase();
       const result = await connection.execute(
-          'INSERT INTO seller_data (seller_id, name, email, password, phone_no, seller_address) VALUES (:id, :name, :email, :password, :phone_no, :seller_address)',
+          'INSERT INTO seller_data (name, email, password, phone_no, seller_address) VALUES (:name, :email, :password, :phone_no, :seller_address)',
           seller_data
       );
       await connection.commit();
@@ -114,7 +115,6 @@ async function checkEmailExistsseller(email) {
 }
 app.post("/seller_register", async (req, res) => {
   const sell_register = {
-      id: req.body.id,
       name: req.body.name,
       email: req.body.email,
       password: req.body.password,
@@ -168,11 +168,9 @@ app.post('/adminlogin', async (req, res) => {
 
 app.post('/buyer_login', async (req, res) => {
   const { email, password } = req.body;
-  console.log('Received login request:', { email, password });
   try {
     const connection = await connectToDatabase();
     const allDataResult = await connection.execute("SELECT * FROM buyer_data");
-    console.log('All data from buyer_data table:', allDataResult.rows);
     const result = await connection.execute(
       "SELECT email FROM buyer_data WHERE email = :email AND password = :password",
       { email, password }
@@ -195,24 +193,21 @@ app.post('/buyer_login', async (req, res) => {
 
 app.post('/seller_login', async (req, res) => {
   const { email, password } = req.body;
-  console.log('Received login request:', { email, password });
   try {
     const connection = await connectToDatabase();
-    const allDataResult = await connection.execute("SELECT * FROM buyer_data");
-    console.log('All data from seller_data table:', allDataResult.rows);
     const result = await connection.execute(
       "SELECT email FROM seller_data WHERE email = :email AND password = :password",
       { email, password }
     );
-    console.log('Query result:', result);
     if (result.rows.length > 0) {
       req.session.issellerLoggedIn = true;
       req.session.sellerType = 'seller';
-      res.redirect('/buyer_dashboard');
+      req.session.seller_email = email;
+      console.log( req.session.seller_email);
+      res.redirect('/seller_view');
     } else {
       res.status(401).send("Invalid credentials");
     }
-
     await connection.close();
   } catch (err) {
     console.error(err);
@@ -220,7 +215,89 @@ app.post('/seller_login', async (req, res) => {
   }
 });
 
+// app.post('/add_crop',(req,resp)=>{
+//    const sel_emial = req.session.seller_email;
+//    resp.send(sel_emial);
+// });
 
+app.post('/add_crop', async (req, res) => {
+  const sell_register = {
+    category: req.body.category,
+    name: req.body.cropname,
+    price: req.body.price,
+    quantity: req.body.quantity,
+    seller_email: req.session.seller_email
+  };
+
+  const connection = await connectToDatabase();
+  
+  const chekcrop = await connection.execute(
+    `SELECT name FROM cropdata WHERE name = :name AND price = :price AND seller_email = :seller_email`,
+    {
+      name: sell_register.name,
+      price: sell_register.price,
+      seller_email: sell_register.seller_email
+    }
+  );
+
+  if (chekcrop.rows.length === 0) {
+    await connection.execute(
+      `INSERT INTO cropdata (category, name, price, quantity, seller_email) 
+       VALUES (:category, :name, :price, :quantity, :seller_email)`,
+      {
+        category: sell_register.category,
+        name: sell_register.name,
+        price: sell_register.price,
+        quantity: sell_register.quantity,
+        seller_email: sell_register.seller_email
+      }
+    );
+
+    await connection.commit();
+
+    notifier.notify({
+      title: 'Crop Inserted',
+      message: 'Crop has been inserted successfully!',
+    });
+  } else {
+    const selctequanity = await connection.execute(
+      `SELECT quantity FROM cropdata WHERE name = :name AND price = :price AND seller_email = :seller_email`,
+      {
+        name: sell_register.name,
+        price: sell_register.price,
+        seller_email: sell_register.seller_email
+      }
+    );
+      let num1 =  parseInt(selctequanity.rows[0][0], 10);
+     let num2 = sell_register.quantity;
+     num2 = parseInt(num2);
+    const setquantity =num1 + num2;
+    await connection.execute(
+      `UPDATE cropdata SET  
+         quantity = :quantity 
+       WHERE name = :name AND price = :price AND seller_email = :seller_email`,
+      {
+        quantity: setquantity,
+        name: sell_register.name,
+        price: sell_register.price,
+        seller_email: sell_register.seller_email
+      }
+    );
+
+    await connection.commit();
+
+    notifier.notify({
+      title: 'Crop Updated',
+      message: 'Crop quantity has been updated successfully!',
+    });
+  }
+
+  res.redirect('/seller_view');
+  await connection.close();
+});
+
+  // const {category,cropname,price,quantity}=req.body;
+  // resp.send(category,cropname,price,quantity);
 app.post('/clearAdminSession', (req, res) => {
   delete req.session.isAdminLoggedIn;
   delete req.session.adminType;
@@ -312,6 +389,15 @@ app.get('/buyer_login', (req, res) => {
 });
 app.get('/crop_detail',requirebuyer, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'HTML','buyingpages', 'crop_detail.html'));
+});
+app.get('/fruit_detail',requirebuyer, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'HTML','buyingpages', 'fruit.html'));
+});
+app.get('/vegetable_detail',requirebuyer, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'HTML','buyingpages', 'vegetable.html'));
+});
+app.get('/grain_detail',requirebuyer, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'HTML','buyingpages', 'grain.html'));
 });
 app.get('/buyer_dashboard',requirebuyer, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'HTML','buyingpages', 'buyer_dashboard.html'));

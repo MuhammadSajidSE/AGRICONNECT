@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Example</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .customcard {
+            width: 15rem; /* Adjust the width of the card */
+            padding: 10px;
+        }
+        .card-img-top {
+            width: 70%; /* Ensure the image fits the card width */
+            height: auto; /* Maintain the aspect ratio */
+            display: block;
+            margin: 0 auto; /* Center the image horizontally */
+        }
+        .card-body {
+            padding: 10px;
+        }
+        .card-body .titles {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+        .card-body h5, .card-body h6 {
+            margin-bottom: 0;
+        }
+        .card-body .btn-container {
+            margin-top: 10px;
+            text-align: center;
+        }
+        body{
+background-color: rgb(244, 255, 251);
+        }
+    </style>
+</head>
+<body>
+    <br>
+    <br>
+<h2 style="text-align: center;">Grain Shoping</h2>
+<br>
+<div class="container">
+    <div class="row" id="card-container">
+        <!-- Cards will be generated here by JavaScript -->
+    </div>
+</div>
+
+<script>
+    const fruits = [
+        { name: 'Wheat', image: '/images/wheat.png', available: 4 },
+        { name: 'Rice', image: '/images/rice.png', available: 4 },
+        { name: 'Corn', image: '/images/food.png', available: 4 },
+        { name: 'Barley', image: '/images/barley.png', available: 4 },
+        { name: 'Oats',image: '/images/oats.png', available: 6 },
+        { name: 'Rye', image: '/images/rye.png', available: 6 },
+        { name: 'Quinoa', image: '/images/quinoa.png', available: 10 },
+	{ name: 'Millet',image: '/images/millet.png', available: 4 },
+        { name: 'Buckwheat', image: '/images/buckwheat.png', available: 4 },
+        { name: 'Sorghum', image: '/images/Sorghum.png', available: 4 },
+        { name: 'Hominy',image: '/images/hominy.png', available: 4 },
+    ];
+
+
+    const cardContainer = document.getElementById('card-container');
+
+    fruits.forEach((fruit, index) => {
+        // Create a new div element for the card
+        const cardCol = document.createElement('div');
+        cardCol.className = 'col-md-3 mb-4';
+
+        // Create the card HTML
+        const cardHTML = `
+            <div class="card customcard">
+                <img class="card-img-top" src="${fruit.image}" alt="Card image cap">
+                <div class="card-body">
+                    <div class="titles">
+                        <h5 class="card-title">${fruit.name}</h5>
+                        <h6 class="card-title">Available ${fruit.available}</h6>
+                    </div>
+                    <div class="btn-container">
+                        <a href="#" class="btn btn-success">Go somewhere</a>
+                    </div>
+                </div>
+            </div>
+        `;
+        cardCol.innerHTML = cardHTML;
+        cardContainer.appendChild(cardCol);
+    });
+</script>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

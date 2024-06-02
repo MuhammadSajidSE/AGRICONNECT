@@ -19,6 +19,7 @@
   "dependencies": {
     "express": "^4.19.2",
     "express-session": "^1.18.0",
+    "node-notifier": "^10.0.1",
     "oracledb": "^5.4.0"
   }
 }
