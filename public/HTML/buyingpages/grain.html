@@ -39,7 +39,7 @@ background-color: rgb(244, 255, 251);
 <body>
     <br>
     <br>
-<h2 style="text-align: center;">Grain Shoping</h2>
+<h2 style="text-align: center;">Grain Shopping</h2>
 <br>
 <div class="container">
     <div class="row" id="card-container">
@@ -48,7 +48,22 @@ background-color: rgb(244, 255, 251);
 </div>
 
 <script>
-    const fruits = [
+    var fetchgrains;
+    fetch('/grains_detail/page')
+        .then(response => response.json())
+        .then(data => {
+            fetchgrains = data;
+            grains.forEach((element, index, arr) => {
+                var accurance = counting(arr[index]["name"], fetchgrains);
+                arr[index]["available"] = accurance;
+            });
+            renderCards();
+        })
+        .catch(error => {
+            console.error('Error fetching data:', error);
+        });
+
+    const grains = [
         { name: 'Wheat', image: '/images/wheat.png', available: 4 },
         { name: 'Rice', image: '/images/rice.png', available: 4 },
         { name: 'Corn', image: '/images/food.png', available: 4 },
@@ -56,40 +71,59 @@ background-color: rgb(244, 255, 251);
         { name: 'Oats',image: '/images/oats.png', available: 6 },
         { name: 'Rye', image: '/images/rye.png', available: 6 },
         { name: 'Quinoa', image: '/images/quinoa.png', available: 10 },
-	{ name: 'Millet',image: '/images/millet.png', available: 4 },
+        { name: 'Millet',image: '/images/millet.png', available: 4 },
         { name: 'Buckwheat', image: '/images/buckwheat.png', available: 4 },
         { name: 'Sorghum', image: '/images/Sorghum.png', available: 4 },
         { name: 'Hominy',image: '/images/hominy.png', available: 4 },
     ];
+    
+    function counting(given, fetchgrains) {
+        var count = 0;
+        fetchgrains.forEach(element => {
+            if (element === given) {
+                count++;
+            }
+        });
+        return count;
+    }
 
+    function renderCards() {
+        const cardContainer = document.getElementById('card-container');
+        cardContainer.innerHTML = ''; // Clear previous cards
 
-    const cardContainer = document.getElementById('card-container');
+        grains.forEach((grain, index) => {
+            // Create a new div element for the card
+            const cardCol = document.createElement('div');
+            cardCol.className = 'col-md-3 mb-4';
 
-    fruits.forEach((fruit, index) => {
-        // Create a new div element for the card
-        const cardCol = document.createElement('div');
-        cardCol.className = 'col-md-3 mb-4';
-
-        // Create the card HTML
-        const cardHTML = `
-            <div class="card customcard">
-                <img class="card-img-top" src="${fruit.image}" alt="Card image cap">
-                <div class="card-body">
-                    <div class="titles">
-                        <h5 class="card-title">${fruit.name}</h5>
-                        <h6 class="card-title">Available ${fruit.available}</h6>
-                    </div>
-                    <div class="btn-container">
-                        <a href="#" class="btn btn-success">Go somewhere</a>
+            // Create the card HTML
+            const cardHTML = `
+                <div class="card customcard" onclick="navigateToCategory('${grain.name}')">
+                    <img class="card-img-top" src="${grain.image}" alt="Card image cap">
+                    <div class="card-body">
+                        <div class="titles">
+                            <h5 class="card-title">${grain.name}</h5>
+                            <h6 class="card-title">Available ${grain.available}</h6>
+                        </div>
+                        <div class="btn-container">
+                            <a href="#" class="btn btn-success">Go somewhere</a>
+                        </div>
                     </div>
                 </div>
-            </div>
-        `;
-        cardCol.innerHTML = cardHTML;
-        cardContainer.appendChild(cardCol);
-    });
-</script>
+            `;
+            cardCol.innerHTML = cardHTML;
+            cardContainer.appendChild(cardCol);
+        });
+    }
 
+        function navigateToCategory(grainName) {
+            const category = 'Grains';
+            const url = `/crop_data_according_to_person?cropname=${encodeURIComponent(grainName)}&category=${encodeURIComponent(category)}`;
+            window.location.href = url;
+        }
+
+
+</script>
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>

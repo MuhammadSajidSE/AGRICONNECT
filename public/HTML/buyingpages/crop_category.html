@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-image: url('/images/crop_category.jpg'); /* Replace with your image path */
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+            height: 90vh;
+        }
+        .circular-image {
+            width: 200px; /* Increase the size */
+            height: 200px; /* Increase the size */
+            border-radius: 50%;
+            overflow: hidden;
+            display: inline-block;
+            margin: 20px; /* Increase the margin */
+        }
+        .circular-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .crop-text {
+            font-size: 1.5em; /* Increase the font size */
+            margin-top: 10px; /* Add margin to separate text from image */
+            color: rgb(110, 110, 110); 
+            font-size: 30px; /* Remove underline from text */
+        }
+        .crop-text:hover {
+            text-decoration: none;
+        }
+        a {
+            text-decoration: none; /* Remove underline from anchor tags */
+        }
+        h1 {
+            font-size: 50px; /* Correct font size property */
+            color: rgb(0, 0, 0);
+        }
+    </style>
+</head>
+<body>
+    <div class="container text-center mt-4">
+        <h1>Selected Crop Category</h1>
+        <div class="row justify-content-center">
+            <div class="col-auto">
+                <a href="/fruit_detail">
+                    <div class="circular-image">
+                        <img src="/images/fruits.jpg" alt="Fruit">
+                    </div>
+                    <div class="crop-text">Fruit</div>
+                </a>
+            </div>
+            <div class="col-auto">
+                <a href="/vegetable_detail">
+                    <div class="circular-image">
+                        <img src="/images/vegetables.jpg" alt="Vegetable">
+                    </div>
+                    <div class="crop-text">Vegetable</div>
+                </a>
+            </div>
+            <div class="col-auto">
+                <a href="/grain_detail">
+                    <div class="circular-image">
+                        <img src="/images/grains.jpg" alt="Grain">
+                    </div>
+                    <div class="crop-text">Grain</div>
+                </a>
+            </div>
+        </div>
+        <a href="buyer_dashboard" class="btn btn-success mt-4" style="border-radius: 30px;">Go to Buyer Dashboard</a>
+    </div>
+    <!-- Bootstrap JS, Popper.js, and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

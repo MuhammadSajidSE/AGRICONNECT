@@ -28,7 +28,8 @@
             /* Slightly transparent background */
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             border-radius: 10px;
-            max-height: 600px; /* Decreased height */
+            max-height: 600px;
+            /* Decreased height */
         }
 
         .heading {
@@ -43,7 +44,8 @@
 
         /* Reduce margin between form inputs */
         .form-group {
-            margin-bottom: 10px; /* Adjust as needed */
+            margin-bottom: 10px;
+            /* Adjust as needed */
         }
     </style>
 </head>
@@ -76,7 +78,8 @@
                 <label for="quantity" class="heading">Quantity (units):</label>
                 <input type="number" class="form-control" name="quantity" id="quantity" min="0" required>
             </div>
-            <button name="submit" type="submit" class="btn btn-success btn-block" style="border-radius: 30px;">Insert Crop</button>
+            <button name="submit" type="submit" class="btn btn-success btn-block" style="border-radius: 30px;">Insert
+                Crop</button>
         </form>
     </div>
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
@@ -89,22 +92,62 @@
             var selectedCategory = categorySelect.value;
             cropSelect.innerHTML = "";
             var fruits = [
-                'Apple', 'Banana', 'Orange', 'Mango', 'Strawberry',
-                'Grape', 'Pineapple', 'Watermelon', 'Kiwi', 'Papaya',
-                'Peach', 'Plum', 'Sapodilla','Date','flig','coconut',
-		        'Guava','Lychee','Melon', 'Pomergranate','Sapodilla',  
-            ];
+                'Apple',
+                'Banana',
+                'Grape',
+                'Watermelon',
+                'Orange',
+                'Mango',
+                'Sapodilla',
+                'Date',
+                'flig',
+                'Guava',
+                'Kiwi',
+                'Lychee',
+                'Melon',
+                'Papaya',
+                'Strawberry',
+                'Peach',
+                'Pineapple',
+                'Plum',
+                'Coconut',
+                'Pomergrana'
+            ]
             var vegetables = [
-                'Potato', 'Tomato', 'Onion', 'Carrot', 'Cucumber',
-                'Lettuce', 'Cauliflower', 'Bell Pepper',
-                'Zucchini', 'Eggplant', 'Green Bean',
-                'Kale', 'Brussels Sprout','bitter-gourd','garlic',
-		        'ginger','nature','pumpkin','papaya','laddy-finger'
-            ];
+                'Potato',
+                'Tomato',
+                'Onion',
+                'Carrot',
+                'Cucumber',
+                'Lettuce',
+                'Cauliflower',
+                'Bell Pepper',
+                'Zucchini',
+                'Eggplant',
+                'Green Bean',
+                'Kale',
+                'Brussels Sprout',
+                'Bitter-gourd',
+                'Garlic',
+                'Ginger',
+                'Peppermint',
+                'Pumpkin',
+                'Papaya',
+                'laddy-finger'
+            ]
             var grains = [
-                'Wheat', 'Rice', 'Corn', 'Barley', 'Oats',
-                'Rye', 'Quinoa', 'Millet', 'Buckwheat', 'Sorghum','Hominy Corn',
-            ];
+                'Wheat',
+                'Rice',
+                'Corn',
+                'Barley',
+                'Oats',
+                'Rye',
+                'Quinoa',
+                'Millet',
+                'Buckwheat',
+                'Sorghum',
+                'Hominy'
+            ]
             var crops = [];
             switch (selectedCategory) {
                 case "Fruits":

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,100 +8,145 @@
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
         .customcard {
-            width: 15rem; /* Adjust the width of the card */
+            width: 15rem;
+            /* Adjust the width of the card */
             padding: 10px;
         }
+
         .card-img-top {
-            width: 70%; /* Ensure the image fits the card width */
-            height: auto; /* Maintain the aspect ratio */
+            width: 70%;
+            /* Ensure the image fits the card width */
+            height: auto;
+            /* Maintain the aspect ratio */
             display: block;
-            margin: 0 auto; /* Center the image horizontally */
+            margin: 0 auto;
+            /* Center the image horizontally */
         }
+
         .card-body {
             padding: 10px;
         }
+
         .card-body .titles {
             display: flex;
             justify-content: space-around;
             align-items: center;
         }
-        .card-body h5, .card-body h6 {
+
+        .card-body h5,
+        .card-body h6 {
             margin-bottom: 0;
         }
+
         .card-body .btn-container {
             margin-top: 10px;
             text-align: center;
         }
-        body{
-background-color: rgb(244, 255, 251);
+
+        body {
+            background-color: rgb(244, 255, 251);
         }
     </style>
 </head>
+
 <body>
     <br>
     <br>
-<h2 style="text-align: center;">Fruit Shoping</h2>
-<br>
-<div class="container">
-    <div class="row" id="card-container">
-        <!-- Cards will be generated here by JavaScript -->
+    <h2 style="text-align: center;">Fruit Shopping</h2>
+    <br>
+    <div class="container">
+        <div class="row" id="card-container">
+            <!-- Cards will be generated here by JavaScript -->
+        </div>
     </div>
-</div>
 
-<script>
-    const fruits = [
-        { name: 'Apple', image: '/images/apple.png', available: 4 },
-        { name: 'Banana', image: '/images/banana.png', available: 4 },
-        { name: 'Grapes', image: '/images/grape.png', available: 4 },
-        { name: 'Watermelon', image: '/images/watermelon.png', available: 4 },
-        { name: 'Orange', image: '/images/orange.png', available: 6 },
-        { name: 'Mango', image: '/images/mango.png', available: 6 },
-        { name: 'Sapodilla', image: '/images/sapodilla.png', available: 10 },
-	    { name: 'Date', image: '/images/dates.png', available: 4 },
-        { name: 'flig', image: '/images/flig.png', available: 4 },
-        { name: 'Guava', image: '/images/guava.png', available: 4 },
-        { name: 'Kiwi', image: '/images/kiwi.png', available: 4 },
-        { name: 'Lychee', image: '/images/lychee.png', available: 6 },
-        { name: 'Melon', image: '/images/melon.png', available: 6 },
-        { name: 'Papaya', image: '/images/papaya.png', available: 10 },
-	    { name: 'Strawberry', image: '/images/strawberry.png', available: 10 },
-        { name: 'Peach', image: '/images/peach.png', available: 10 },
-        { name: 'Pineapple', image: '/images/pineapple.png', available: 6 },
-        { name: 'Plum', image: '/images/plum.png', available: 10 },
-	    { name: 'Coconut', image: '/images/coconut.png', available: 10 },
-	    { name: 'Pomergranate', image: '/images/pomegranate.png', available: 10 },
-    ];
+    <script>
+        var fetchfruit;
+        fetch('/fruit_detail/page')
+            .then(response => response.json())
+            .then(data => {
+                fetchfruit = data;
+                fruits.forEach((element, index, arr) => {
+                    var accurance = counting(arr[index]["name"], fetchfruit);
+                    arr[index]["available"] = accurance;
+                });
+                renderCards();
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
+            });
 
+        const fruits = [
+            { name: 'Apple', image: '/images/apple.png', available: 4 },
+            { name: 'Banana', image: '/images/banana.png', available: 4 },
+            { name: 'Grape', image: '/images/grape.png', available: 4 },
+            { name: 'Watermelon', image: '/images/watermelon.png', available: 4 },
+            { name: 'Orange', image: '/images/orange.png', available: 6 },
+            { name: 'Mango', image: '/images/mango.png', available: 6 },
+            { name: 'Sapodilla', image: '/images/sapodilla.png', available: 10 },
+            { name: 'Date', image: '/images/dates.png', available: 4 },
+            { name: 'flig', image: '/images/fig.png', available: 4 },
+            { name: 'Guava', image: '/images/guava.png', available: 4 },
+            { name: 'Kiwi', image: '/images/kiwi.png', available: 4 },
+            { name: 'Lychee', image: '/images/lychee.png', available: 6 },
+            { name: 'Melon', image: '/images/melon.png', available: 6 },
+            { name: 'Papaya', image: '/images/papaya.png', available: 10 },
+            { name: 'Strawberry', image: '/images/strawberry.png', available: 10 },
+            { name: 'Peach', image: '/images/peach.png', available: 10 },
+            { name: 'Pineapple', image: '/images/pineapple.png', available: 6 },
+            { name: 'Plum', image: '/images/plum.png', available: 10 },
+            { name: 'Coconut', image: '/images/coconut.png', available: 10 },
+            { name: 'Pomergrana', image: '/images/pomegranate.png', available: 10 },
+        ];
 
-    const cardContainer = document.getElementById('card-container');
+        function counting(given, fetchfruit) {
+            var count = 0;
+            fetchfruit.forEach(element => {
+                if (element === given) {
+                    count++;
+                }
+            });
+            return count;
+        }
 
-    fruits.forEach((fruit, index) => {
-        // Create a new div element for the card
-        const cardCol = document.createElement('div');
-        cardCol.className = 'col-md-3 mb-4';
+        function renderCards() {
+            const cardContainer = document.getElementById('card-container');
+            cardContainer.innerHTML = ''; // Clear previous cards
 
-        // Create the card HTML
-        const cardHTML = `
-            <div class="card customcard">
-                <img class="card-img-top" src="${fruit.image}" alt="Card image cap">
-                <div class="card-body">
-                    <div class="titles">
-                        <h5 class="card-title">${fruit.name}</h5>
-                        <h6 class="card-title">Available ${fruit.available}</h6>
-                    </div>
-                    <div class="btn-container">
-                        <a href="#" class="btn btn-success">Go somewhere</a>
+            fruits.forEach((fruit, index) => {
+                // Create a new div element for the card
+                const cardCol = document.createElement('div');
+                cardCol.className = 'col-md-3 mb-4';
+
+                // Create the card HTML
+                const cardHTML = `
+                <div class="card customcard" onclick="navigateToCategory('${fruit.name}')">
+                    <img class="card-img-top" src="${fruit.image}" alt="Card image cap">
+                    <div class="card-body">
+                        <div class="titles">
+                            <h5 class="card-title">${fruit.name}</h5>
+                            <h6 class="card-title">Available ${fruit.available}</h6>
+                        </div>
+                        <div class="btn-container">
+                            <a href="#" class="btn btn-success">Go somewhere</a>
+                        </div>
                     </div>
                 </div>
-            </div>
-        `;
-        cardCol.innerHTML = cardHTML;
-        cardContainer.appendChild(cardCol);
-    });
-</script>
+            `;
+                cardCol.innerHTML = cardHTML;
+                cardContainer.appendChild(cardCol);
+            });
+        }
+        function navigateToCategory(fruitName) {
+            const category = 'Fruits';
+            const url = `/crop_data_according_to_person?cropname=${encodeURIComponent(fruitName)}&category=${encodeURIComponent(category)}`;
+            window.location.href = url;
+        }
+    </script>
 
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
+
 </html>

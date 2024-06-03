@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crop Data According to Person</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .customcard {
+            width: 15rem;
+            margin: 10px;
+            padding: 10px;
+        }
+        .card-img-top {
+            height: 100%; 
+            width: 100%; 
+            object-fit: cover;
+        }
+        h3{
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <br>
+        <h3>Category: <span id="category"></span></h3>
+        <h3>Crop Name: <span id="cropName"></span></h3>
+        <div class="row" id="card-container">
+        </div>
+    </div>
+
+    <script>
+        function getQueryParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        const category = getQueryParameter('category');
+        const cropName = getQueryParameter('cropname');
+        document.getElementById('category').textContent = category;
+        document.getElementById('cropName').textContent = cropName;
+
+        async function fetchData() {
+            const response = await fetch(`/person_category?cropname=${cropName}&category=${category}`);
+            const data = await response.json();
+            const cardContainer = document.getElementById('card-container');
+
+            data.forEach(row => {
+                const cardCol = document.createElement('div');
+                cardCol.className = 'col-md-4';
+
+                const [cropId, name, category, quantity, price, sellerName, sellerEmail] = row;
+                const imageUrl = `/images/farmer.png`; // Assuming images are named after the crop names in lowercase
+
+                const cardHTML = `
+                    <div class="card customcard">
+                        <img class="card-img-top" src="${imageUrl}" alt="${name}" width="20px" height="20px">
+                        <div class="card-body">
+                            <p class="card-text">Farmer Name : ${sellerName}</p>
+                            <p class="card-text">Price Per Keg : $${price}</p>
+                            <p class="card-text">Quantity in Kg : ${quantity}</p>
+                        </div>
+                    </div>
+                `;
+                cardCol.innerHTML = cardHTML;
+                cardContainer.appendChild(cardCol);
+            });
+        }
+
+        fetchData();
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

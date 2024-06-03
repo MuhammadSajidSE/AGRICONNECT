@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,100 +8,147 @@
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
         .customcard {
-            width: 15rem; /* Adjust the width of the card */
+            width: 15rem;
+            /* Adjust the width of the card */
             padding: 10px;
         }
+
         .card-img-top {
-            width: 70%; /* Ensure the image fits the card width */
-            height: auto; /* Maintain the aspect ratio */
+            width: 70%;
+            /* Ensure the image fits the card width */
+            height: auto;
+            /* Maintain the aspect ratio */
             display: block;
-            margin: 0 auto; /* Center the image horizontally */
+            margin: 0 auto;
+            /* Center the image horizontally */
         }
+
         .card-body {
             padding: 10px;
         }
+
         .card-body .titles {
             display: flex;
             justify-content: space-around;
             align-items: center;
         }
-        .card-body h5, .card-body h6 {
+
+        .card-body h5,
+        .card-body h6 {
             margin-bottom: 0;
         }
+
         .card-body .btn-container {
             margin-top: 10px;
             text-align: center;
         }
-        body{
-background-color: rgb(244, 255, 251);
+
+        body {
+            background-color: rgb(244, 255, 251);
         }
     </style>
 </head>
+
 <body>
     <br>
     <br>
-<h2 style="text-align: center;">vegetable Shoping</h2>
-<br>
-<div class="container">
-    <div class="row" id="card-container">
-        <!-- Cards will be generated here by JavaScript -->
+    <h2 style="text-align: center;">Vegetable Shopping</h2>
+    <br>
+    <div class="container">
+        <div class="row" id="card-container">
+            <!-- Cards will be generated here by JavaScript -->
+        </div>
     </div>
-</div>
 
-<script>
-    const fruits = [
-        { name: 'Potato', image: '/images/potato.png', available: 4 },
-        { name: 'Tomato', image: '/images/tomato.png', available: 4 },
-        { name: 'Onion', image: '/images/onion.png', available: 4 },
-        { name: 'Carrot', image: '/images/carrot.png', available: 4 },
-        { name: 'Cucumber',image: '/images/cucumber.png', available: 6 },
-        { name: 'Lettuce', image: '/images/lettuce.png', available: 6 },
-        { name: 'Cauliflower', image: '/images/cauliflower.png', available: 10 },
-	{ name: 'Bell Pepper',image: '/images/dates.png', available: 4 },
-        { name: 'Zucchini', image: '/images/zucchini.png', available: 4 },
-        { name: 'Eggplant', image: '/images/eggplant.png', available: 4 },
-        { name: 'Green Bean',image: '/images/green-beans.png', available: 4 },
-        { name: 'Kale', image: '/images/kale.png', available: 6 },
-        { name: 'Brussels Sprout',image: '/images/brussel-sprouts.png', available: 6 },
-        { name: 'Bitter-gourd',image: '/images/bitter-gourd.png', available: 10 },
-	{ name: 'Garlic',image: '/images/garlic.png', available: 10 },
-        { name: 'Ginger',image: '/images/ginger.png', available: 10 },
-        { name: 'Peppermint', image: '/images/nature.png', available: 6 },
-        { name: 'Pumpkin', image: '/images/pumpkin.png', available: 10 },
-	{ name: 'Papaya', image: '/images/papaya.png', available: 10 },
-	{ name: 'laddy-finger', image: '/images/vegetable.png', available: 10 },
-    ];
+    <script>
+        var fetchvegetable;
+        fetch('/vegitable_detail/page')
+            .then(response => response.json())
+            .then(data => {
+                fetchvegetable = data;
+                vegetables.forEach((element, index, arr) => {
+                    var accurance = counting(arr[index]["name"], fetchvegetable);
+                    arr[index]["available"] = accurance;
+                });
+                renderCards();
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
+            });
 
+        const vegetables = [
+            { name: 'Potato', image: '/images/potato.png', available: 4 },
+            { name: 'Tomato', image: '/images/tomato.png', available: 4 },
+            { name: 'Onion', image: '/images/onion.png', available: 4 },
+            { name: 'Carrot', image: '/images/carrot.png', available: 4 },
+            { name: 'Cucumber', image: '/images/cucumber.png', available: 6 },
+            { name: 'Lettuce', image: '/images/lettuce.png', available: 6 },
+            { name: 'Cauliflower', image: '/images/cauliflower.png', available: 10 },
+            { name: 'Bell Pepper', image: '/images/dates.png', available: 4 },
+            { name: 'Zucchini', image: '/images/zucchini.png', available: 4 },
+            { name: 'Eggplant', image: '/images/eggplant.png', available: 4 },
+            { name: 'Green Bean', image: '/images/green-beans.png', available: 4 },
+            { name: 'Kale', image: '/images/kale.png', available: 6 },
+            { name: 'Brussels', image: '/images/brussel-sprouts.png', available: 6 },
+            { name: 'Bitter-gourd', image: '/images/bitter-gourd.png', available: 10 },
+            { name: 'Garlic', image: '/images/garlic.png', available: 10 },
+            { name: 'Ginger', image: '/images/ginger.png', available: 10 },
+            { name: 'Peppermint', image: '/images/nature.png', available: 6 },
+            { name: 'Pumpkin', image: '/images/pumpkin.png', available: 10 },
+            { name: 'Papaya', image: '/images/papaya.png', available: 10 },
+            { name: 'laddy-finger', image: '/images/vegetable.png', available: 10 },
+        ];
 
-    const cardContainer = document.getElementById('card-container');
+        function counting(given, fetchvegetable) {
+            var count = 0;
+            fetchvegetable.forEach(element => {
+                if (element === given) {
+                    count++;
+                }
+            });
+            return count;
+        }
 
-    fruits.forEach((fruit, index) => {
-        // Create a new div element for the card
-        const cardCol = document.createElement('div');
-        cardCol.className = 'col-md-3 mb-4';
+        function renderCards() {
+            const cardContainer = document.getElementById('card-container');
+            cardContainer.innerHTML = ''; // Clear previous cards
 
-        // Create the card HTML
-        const cardHTML = `
-            <div class="card customcard">
-                <img class="card-img-top" src="${fruit.image}" alt="Card image cap">
-                <div class="card-body">
-                    <div class="titles">
-                        <h5 class="card-title">${fruit.name}</h5>
-                        <h6 class="card-title">Available ${fruit.available}</h6>
+            vegetables.forEach((vegetable, index) => {
+                // Create a new div element for the card
+                const cardCol = document.createElement('div');
+                cardCol.className = 'col-md-3 mb-4';
+
+                // Create the card HTML
+                const cardHTML = `
+                    <div class="card customcard" onclick="navigateToCategory('${vegetable.name}')">
+                        <img class="card-img-top" src="${vegetable.image}" alt="Card image cap">
+                        <div class="card-body">
+                            <div class="titles">
+                                <h5 class="card-title">${vegetable.name}</h5>
+                                <h6 class="card-title">Available ${vegetable.available}</h6>
+                            </div>
+                            <div class="btn-container">
+                                <a href="#" class="btn btn-success">Go somewhere</a>
+                            </div>
+                        </div>
                     </div>
-                    <div class="btn-container">
-                        <a href="#" class="btn btn-success">Go somewhere</a>
-                    </div>
-                </div>
-            </div>
-        `;
-        cardCol.innerHTML = cardHTML;
-        cardContainer.appendChild(cardCol);
-    });
-</script>
+                `;
+                cardCol.innerHTML = cardHTML;
+                cardContainer.appendChild(cardCol);
+            });
+        }
 
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+        function navigateToCategory(vegetableName) {
+            const category = 'vegetables';
+            const url = `/crop_data_according_to_person?cropname=${encodeURIComponent(vegetableName)}&category=${encodeURIComponent(category)}`;
+            window.location.href = url;
+        }
+
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
+
 </html>

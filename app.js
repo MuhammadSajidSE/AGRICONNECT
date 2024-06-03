@@ -215,11 +215,6 @@ app.post('/seller_login', async (req, res) => {
   }
 });
 
-// app.post('/add_crop',(req,resp)=>{
-//    const sel_emial = req.session.seller_email;
-//    resp.send(sel_emial);
-// });
-
 app.post('/add_crop', async (req, res) => {
   const sell_register = {
     category: req.body.category,
@@ -296,8 +291,6 @@ app.post('/add_crop', async (req, res) => {
   await connection.close();
 });
 
-  // const {category,cropname,price,quantity}=req.body;
-  // resp.send(category,cropname,price,quantity);
 app.post('/clearAdminSession', (req, res) => {
   delete req.session.isAdminLoggedIn;
   delete req.session.adminType;
@@ -340,8 +333,50 @@ function requirebuyer(req, res, next) {
   }
 }
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.get('/fruit_detail/page',requirebuyer, async (req, resp) => {
+    const connection = await connectToDatabase();
+    const result = await connection.execute('SELECT * FROM cropdata WHERE CATEGORY = \'Fruits\'');
+    const secondValues = result.rows.map(row => row[1]);
+    resp.send(secondValues);
+});
 
+app.get('/vegitable_detail/page', requirebuyer,async (req, resp) => {
+  const connection = await connectToDatabase();
+  const result = await connection.execute('SELECT * FROM cropdata WHERE CATEGORY = \'Vegetables\'');
+  const secondValues = result.rows.map(row => row[1]);
+  resp.send(secondValues);
+});
+
+app.get('/grains_detail/page',requirebuyer, async (req, resp) => {
+  const connection = await connectToDatabase();
+  const result = await connection.execute('SELECT * FROM cropdata WHERE CATEGORY = \'Grains\'');
+  const secondValues = result.rows.map(row => row[1]);
+  resp.send(secondValues);
+});
+
+app.get('/person_category', async (req, res) => {
+  let connection;
+  let { cropname, category } = req.query;
+
+  cropname = cropname.trim();
+  category = category.trim();
+  console.log(`Received request for cropname: ${cropname}, category: ${category}`);
+  category = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+  
+  connection = await connectToDatabase();
+  const result = await connection.execute(
+    `SELECT c.CROPID, c.NAME, c.CATEGORY, c.QUANTITY, c.PRICE, s.NAME as SELLER_NAME, c.SELLER_EMAIL
+     FROM cropdata c
+     JOIN seller_data s ON c.SELLER_EMAIL = s.EMAIL
+     WHERE LOWER(c.NAME) = LOWER(:1) AND LOWER(c.CATEGORY) = LOWER(:2)`,
+    [cropname, category]
+  );
+  
+  console.log('Query executed successfully. Rows:', result.rows);
+  res.json(result.rows);
+});
+
+app.use(express.static(path.join(__dirname, 'public')));
 //Mainpages
 app.get('/', async (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'HTML','mainpages', 'home.html'));
@@ -388,7 +423,7 @@ app.get('/buyer_login', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'HTML','buyingpages', 'buyer_login.html'));
 });
 app.get('/crop_detail',requirebuyer, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'HTML','buyingpages', 'crop_detail.html'));
+  res.sendFile(path.join(__dirname, 'public', 'HTML','buyingpages', 'crop_category.html'));
 });
 app.get('/fruit_detail',requirebuyer, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'HTML','buyingpages', 'fruit.html'));
@@ -401,6 +436,14 @@ app.get('/grain_detail',requirebuyer, (req, res) => {
 });
 app.get('/buyer_dashboard',requirebuyer, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'HTML','buyingpages', 'buyer_dashboard.html'));
+});
+
+app.get('/person_category',requirebuyer, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'HTML','buyingpages', 'person_category.html'));
+});
+
+app.get('/crop_data_according_to_person',requirebuyer, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public','HTML','buyingpages', 'crop_data_according_to_person.html'));
 });
 
 const server = app.listen(port, () => {
