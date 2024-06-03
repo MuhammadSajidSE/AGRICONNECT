@@ -1,131 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Card Example</title>
+    <title>Grain Shopping</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
         .customcard {
-            width: 15rem; /* Adjust the width of the card */
-            padding: 10px;
+            width: 18rem;
+            margin: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
         }
+
+        .customcard:hover {
+            transform: scale(1.05);
+        }
+
         .card-img-top {
-            width: 70%; /* Ensure the image fits the card width */
-            height: auto; /* Maintain the aspect ratio */
+            width: 70%;
+            height: 70%;
+            object-fit: cover;
             display: block;
-            margin: 0 auto; /* Center the image horizontally */
+            margin: 10px auto;
+            border-radius: 50%;
+            border: 1px solid #ddd;
         }
+
         .card-body {
-            padding: 10px;
-        }
-        .card-body .titles {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-        }
-        .card-body h5, .card-body h6 {
-            margin-bottom: 0;
-        }
-        .card-body .btn-container {
-            margin-top: 10px;
+            padding: 20px;
             text-align: center;
         }
-        body{
-background-color: rgb(244, 255, 251);
+
+        .card-body .titles {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-body h5,
+        .card-body h6 {
+            margin-bottom: 0;
+        }
+
+        .card-body .btn-container {
+            margin-top: 15px;
+        }
+
+        body {
+            background-color: rgb(244, 255, 251);
+        }
+
+        h2 {
+            color: #4CAF50;
+        }
+
+        .container {
+            max-width: 1200px;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .btn-success:hover {
+            background-color: #218838;
+        }
+
+        @media (max-width: 576px) {
+            .customcard {
+                width: 100%;
+            }
         }
     </style>
 </head>
+
 <body>
     <br>
+    <h2 class="text-center">Grain Shopping</h2>
     <br>
-<h2 style="text-align: center;">Grain Shopping</h2>
-<br>
-<div class="container">
-    <div class="row" id="card-container">
-        <!-- Cards will be generated here by JavaScript -->
+    <div class="container">
+        <div class="row justify-content-center" id="card-container">
+            <!-- Cards will be generated here by JavaScript -->
+        </div>
     </div>
-</div>
 
-<script>
-    var fetchgrains;
-    fetch('/grains_detail/page')
-        .then(response => response.json())
-        .then(data => {
-            fetchgrains = data;
-            grains.forEach((element, index, arr) => {
-                var accurance = counting(arr[index]["name"], fetchgrains);
-                arr[index]["available"] = accurance;
+    <script>
+        var fetchgrains;
+        fetch('/grains_detail/page')
+            .then(response => response.json())
+            .then(data => {
+                fetchgrains = data;
+                grains.forEach((element, index, arr) => {
+                    var accurance = counting(arr[index]["name"], fetchgrains);
+                    arr[index]["available"] = accurance;
+                });
+                renderCards();
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
             });
-            renderCards();
-        })
-        .catch(error => {
-            console.error('Error fetching data:', error);
-        });
 
-    const grains = [
-        { name: 'Wheat', image: '/images/wheat.png', available: 4 },
-        { name: 'Rice', image: '/images/rice.png', available: 4 },
-        { name: 'Corn', image: '/images/food.png', available: 4 },
-        { name: 'Barley', image: '/images/barley.png', available: 4 },
-        { name: 'Oats',image: '/images/oats.png', available: 6 },
-        { name: 'Rye', image: '/images/rye.png', available: 6 },
-        { name: 'Quinoa', image: '/images/quinoa.png', available: 10 },
-        { name: 'Millet',image: '/images/millet.png', available: 4 },
-        { name: 'Buckwheat', image: '/images/buckwheat.png', available: 4 },
-        { name: 'Sorghum', image: '/images/Sorghum.png', available: 4 },
-        { name: 'Hominy',image: '/images/hominy.png', available: 4 },
-    ];
-    
-    function counting(given, fetchgrains) {
-        var count = 0;
-        fetchgrains.forEach(element => {
-            if (element === given) {
-                count++;
-            }
-        });
-        return count;
-    }
+        const grains = [
+            { name: 'Wheat', image: '/images/wheat.png', available: 4 },
+            { name: 'Rice', image: '/images/rice.png', available: 4 },
+            { name: 'Corn', image: '/images/food.png', available: 4 },
+            { name: 'Barley', image: '/images/barley.png', available: 4 },
+            { name: 'Oats', image: '/images/oats.png', available: 6 },
+            { name: 'Rye', image: '/images/rye.png', available: 6 },
+            { name: 'Quinoa', image: '/images/quinoa.png', available: 10 },
+            { name: 'Millet', image: '/images/millet.png', available: 4 },
+            { name: 'Buckwheat', image: '/images/buckwheat.png', available: 4 },
+            { name: 'Sorghum', image: '/images/sorghum.png', available: 4 },
+            { name: 'Hominy', image: '/images/hominy.png', available: 4 },
+        ];
 
-    function renderCards() {
-        const cardContainer = document.getElementById('card-container');
-        cardContainer.innerHTML = ''; // Clear previous cards
+        function counting(given, fetchgrains) {
+            var count = 0;
+            fetchgrains.forEach(element => {
+                if (element === given) {
+                    count++;
+                }
+            });
+            return count;
+        }
 
-        grains.forEach((grain, index) => {
-            // Create a new div element for the card
-            const cardCol = document.createElement('div');
-            cardCol.className = 'col-md-3 mb-4';
+        function renderCards() {
+            const cardContainer = document.getElementById('card-container');
+            cardContainer.innerHTML = ''; // Clear previous cards
 
-            // Create the card HTML
-            const cardHTML = `
-                <div class="card customcard" onclick="navigateToCategory('${grain.name}')">
-                    <img class="card-img-top" src="${grain.image}" alt="Card image cap">
-                    <div class="card-body">
-                        <div class="titles">
-                            <h5 class="card-title">${grain.name}</h5>
-                            <h6 class="card-title">Available ${grain.available}</h6>
-                        </div>
-                        <div class="btn-container">
-                            <a href="#" class="btn btn-success">Go somewhere</a>
+            grains.forEach((grain, index) => {
+                const cardCol = document.createElement('div');
+                cardCol.className = 'col-md-4 col-sm-6 col-lg-3 mb-4';
+
+                const cardHTML = `
+                    <div class="card customcard" onclick="navigateToCategory('${grain.name}')">
+                        <img class="card-img-top" src="${grain.image}" alt="Card image cap">
+                        <div class="card-body">
+                            <div class="titles">
+                                <h5 class="card-title">${grain.name}</h5>
+                                <h6 class="card-title">Available ${grain.available}</h6>
+                            </div>
+                            <div class="btn-container">
+                                <a href="#" class="btn btn-success">Go somewhere</a>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
-            cardCol.innerHTML = cardHTML;
-            cardContainer.appendChild(cardCol);
-        });
-    }
+                `;
+                cardCol.innerHTML = cardHTML;
+                cardContainer.appendChild(cardCol);
+            });
+        }
 
         function navigateToCategory(grainName) {
             const category = 'Grains';
             const url = `/crop_data_according_to_person?cropname=${encodeURIComponent(grainName)}&category=${encodeURIComponent(category)}`;
             window.location.href = url;
         }
+    </script>
 
-
-</script>
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
+
 </html>

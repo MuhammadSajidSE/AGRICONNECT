@@ -1,9 +1,13 @@
 const path = require('path');
-const port = 3001;
+const port = 3000;
 const express = require("express");
 const session = require('express-session');
 const oracledb = require("oracledb");
 const notifier = require('node-notifier');
+const { count } = require('console');
+
+// oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
+
 const app = express();
 app.use(express.json());
 app.use(session({
@@ -23,69 +27,71 @@ async function connectToDatabase() {
 }
 
 // async function checkEmailExists(email) {
-  async function checkEmailExistbuyer(email) {
+  app.post("/buyer_register", async (req, res) => {
+    const buyer_register = {
+        name: req.body.name,
+        email: req.body.email,
+        password: req.body.password,
+        phone_no: req.body.phone_no,
+        buyer_address: req.body.address,
+        city: req.body.city // Add the city field
+    };
+
+    try {
+        const emailExists = await checkEmailExistbuyer(buyer_register.email);
+        if (emailExists) {
+            res.redirect('/buyer_register?error=Email%20already%20exists');
+        } else {
+            await buyer_registers(buyer_register);
+            req.session.isbuyerLoggedIn = true;
+            req.session.buyerType = 'buyer';
+            res.redirect('/buyer_dashboard');
+        }
+    } catch (error) {
+        console.error('Error during buyer registration:', error); // Log the error
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+// Function to check if email exists in the database
+async function checkEmailExistbuyer(email) {
     try {
         const connection = await connectToDatabase();
         const result = await connection.execute(
-            'SELECT * FROM buyer_data WHERE LOWER(email) = :email',
+            'SELECT * FROM buyerdata WHERE LOWER(BUYER_EMAIL) = :email',
             { email: email.toLowerCase() }
         );
         await connection.close();
         
-        // If any row is returned from the query, return true; otherwise, return false
         return result.rows.length > 0;
     } catch (error) {
         console.error('Error checking email existence:', error);
         throw error;
     }
 }
-  async function buyer_registers(buyers_data) {
+
+// Function to register buyer
+async function buyer_registers(buyers_data) {
     try {
-      const connection = await connectToDatabase();
-      const result = await connection.execute(
-        'INSERT INTO buyer_data (buyer_id , name, email, password, phone_no, buyer_address ) VALUES (:id, :name, :email, :password, :phone_no, :buyer_address )',
-        buyers_data
-      );
-      await connection.commit();
-      await connection.close();
-      return result; // Return the result if needed
+        const connection = await connectToDatabase();
+        const result = await connection.execute(
+            'INSERT INTO buyerdata (NAME, BUYER_EMAIL, PASSWORD, PHONE_NO, ADDRESS, CITY) VALUES (:name, :email, :password, :phone_no, :buyer_address, :city)',
+            buyers_data
+        );
+        await connection.commit();
+        await connection.close();
+        return result;
     } catch (error) {
-      console.error('Error registering buyer:', error);
-      throw error; // Rethrow the error for the caller to handle
+        console.error('Error registering buyer:', error);
+        throw error;
     }
-  }
-  app.post("/buyer_register", async (req, res) => {
-    const buyer_register = {
-        id: req.body.id,
-        name: req.body.name,
-        email: req.body.email,
-        password: req.body.password,
-        phone_no: req.body.phone_no,
-        buyer_address: req.body.address
-    };
-    try {
-        // Server-side validation to check if the name field is empty
-        const emailExists = await checkEmailExistbuyer(buyer_register.email);
-        if (emailExists) {
-            // Redirect with error message
-            res.redirect('/buyer_register?error=Email%20already%20exists');
-        } else {
-            await buyer_registers(buyer_register);
-            req.session.isbuyerLoggedIn = true;
-            req.session.buyerType = 'buyer';
-            res.redirect('/mainbuying');
-        }
-    } catch (error) {
-        // Send a response to the client without logging the error to the terminal
-        res.status(500).send('Internal Server Error');
-    }
-});
+}
 
 async function seller_registers(seller_data) {
   try {
       const connection = await connectToDatabase();
       const result = await connection.execute(
-          'INSERT INTO seller_data (name, email, password, phone_no, seller_address) VALUES (:name, :email, :password, :phone_no, :seller_address)',
+          'INSERT INTO seller_data (name, email, password, phone_no, seller_address, city) VALUES (:name, :email, :password, :phone_no, :seller_address, :city)',
           seller_data
       );
       await connection.commit();
@@ -119,10 +125,11 @@ app.post("/seller_register", async (req, res) => {
       email: req.body.email,
       password: req.body.password,
       phone_no: req.body.phone_no,
-      seller_address: req.body.address
+      seller_address: req.body.address,
+      city: req.body.city // Add the city field
   };
   try {
-      // Server-side validation to check if the name field is empty
+      // Server-side validation to check if the email field is unique
       const emailExists = await checkEmailExistsseller(sell_register.email);
       if (emailExists) {
           // Redirect with error message
@@ -170,9 +177,9 @@ app.post('/buyer_login', async (req, res) => {
   const { email, password } = req.body;
   try {
     const connection = await connectToDatabase();
-    const allDataResult = await connection.execute("SELECT * FROM buyer_data");
+    const allDataResult = await connection.execute("SELECT * FROM buyerdata");
     const result = await connection.execute(
-      "SELECT email FROM buyer_data WHERE email = :email AND password = :password",
+      "SELECT BUYER_EMAIL FROM buyerdata WHERE BUYER_EMAIL = :email AND password = :password",
       { email, password }
     );
     console.log('Query result:', result);
@@ -196,7 +203,7 @@ app.post('/seller_login', async (req, res) => {
   try {
     const connection = await connectToDatabase();
     const result = await connection.execute(
-      "SELECT email FROM seller_data WHERE email = :email AND password = :password",
+      "SELECT EMAIL FROM seller_data WHERE EMAIL = :email AND password = :password",
       { email, password }
     );
     if (result.rows.length > 0) {
@@ -376,6 +383,69 @@ app.get('/person_category', async (req, res) => {
   res.json(result.rows);
 });
 
+
+
+
+
+// Database ADmin
+
+// Function to fetch table data
+async function fetchTableData() {
+  try {
+    oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
+    const connection = await connectToDatabase();
+      const buyer_data = await connection.execute(`SELECT BUYER_EMAIL, NAME, PHONE_NO, ADDRESS, CITY FROM BUYERDATA ORDER BY NAME`);
+      const seller_data = await connection.execute(`SELECT EMAIL AS SELLER_EMAIL, NAME, PHONE_NO,  SELLER_ADDRESS, CITY  FROM SELLER_DATA ORDER BY NAME`);
+      const crop_data = await connection.execute(`SELECT * FROM CROPDATA ORDER BY CROPID`);
+
+      await connection.close();
+
+      const result = {
+          BUYER_DATA: buyer_data.rows,
+          BUYER_COUNT: buyer_data.rows.length,
+          SELLER_DATA: seller_data.rows,
+          SELLER_COUNT: seller_data.rows.length,
+          CROP_DATA: crop_data.rows,
+          CROP_COUNT: crop_data.rows.length,
+      };
+
+      return result;
+
+  } catch (err) {
+      console.error("Error:", err);
+      throw err;
+  }
+}
+
+// Route to serve the table data
+app.get('/getTableData', async (req, res) => {
+  try {
+      const tableData = await fetchTableData();
+      res.json(tableData);
+  } catch (error) {
+      console.error('Error fetching tableData:', error);
+      res.status(500).send('Internal Server Error');
+  }
+});
+
+
+// Route to serve the table data
+app.get('/getTableData', async (req, res) => {
+  try {
+      const tableData = await fetchTableData();
+      res.json(tableData);
+  } catch (error) {
+      console.error('Error fetching tableData:', error);
+      res.status(500).send('Internal Server Error');
+  }
+});
+
+
+
+
+
+
+
 app.use(express.static(path.join(__dirname, 'public')));
 //Mainpages
 app.get('/', async (req, res) => {
@@ -413,9 +483,6 @@ app.get('/admin_dashboard',requireAdmin, (req, res) => {
 
 
 //Buyingpages
-app.get('/mainbuying',requirebuyer, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'HTML','buyingpages', 'mainbuying.html'));
-});
 app.get('/buyer_register', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'HTML','buyingpages', 'buyer_register.html'));
 });

@@ -3,19 +3,298 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Admin Dashboard</title>
+
+    <style>
+        body, html {
+margin: 0;
+padding: 0;
+}
+.container {
+display: flex;
+height: 100%;
+align-items: flex-start;
+background-image: url('../../images/adminbg.webp');
+background-size:cover;
+}
+
+.sidebar {
+position: sticky;
+top: 0%;
+width: 20%;
+background-color: #28310db1;
+color: #fff;
+padding: 0.5%;
+padding-bottom: 30vh;
+}
+.sidebar-header {
+text-align: center;
+font-size: 1.7rem;
+padding: 5% 0%;
+border-bottom: 2px solid rgba(128, 128, 128, 0.708);
+}
+
+.sidebar-menu {
+list-style-type: none;
+padding: 0;
+margin: 0;
+
+}
+
+.sidebar-menu li a {
+border-bottom: 2px solid rgba(128, 128, 128, 0.704);
+display: block;
+padding: 7% 5%;
+color: #fff;
+text-decoration: none;
+font-size: 1.3rem;
+font-weight :bold;
+transition: background-color 0.3s;
+}
+
+.sidebar-menu li a:hover {
+background-color: #040700ab;
+}
+
+.main-content{
+background-color: rgba(30, 40, 12, 0.359);
+width: 100%;
+padding-bottom: 1%;
+}
+
+.main-content h1{
+padding-top: 1% ;
+text-align: center;
+color: #fff;
+margin: 1% auto;
+margin-top: 2%;
+}
+
+table {
+margin: 1% auto;
+width: 99%;
+padding: 1.5% 1%;
+border-collapse:collapse;
+}
+th, td {
+padding: 8px;
+text-align: left;
+border: 1px solid #000000;
+}
+
+td{
+background-color: rgba(240, 248, 255, 0.59);
+font-weight: bold;
+}
+
+th {
+background-color: #1b2e15d1;
+color: #fff;
+border: 1px solid white;
+}
+
+/* Dashboard cards */
+
+#dashboardCards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+    margin-bottom: 2rem;
+    width: 100%;
+    height: 100%;
+}
+
+.card {
+    background: radial-gradient(circle, #ffffffe9, #ffffffba, #ffdb93d2, #000000);
+    border-radius: 200px;
+    border: 1px double white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 2rem 2rem;
+    width: calc(35% - 1.5rem); /* Adjust width to account for margin */
+    text-align: center;
+    margin: 1rem; /* Even margins for all sides */
+    margin-bottom: 2.5rem;
+}
+
+.card h2 {
+    font-size: 2rem;
+    margin: 0 0 1rem 0;
+}
+
+.card .count {
+    font-size: 3.5rem;
+    margin: 0.5rem 0;
+    color: #000000;
+}
+
+.card p {
+    margin: 0.5rem 0;
+}
+
+    </style>
+
 </head>
 <body>
-    <h1>Admin Dashboard</h1>
-    <a href="">seller data</a>
-    <br>
-    <a href="">buyer data</a>
-    <br>
-    <a href="">selling crop data</a>
-    <br>
-    <a href="">sold crop data</a>
-    <br>
-    <br>
-    <a href="\"><button>Back to home</button></a>
+
+    <body>
+        <div class="container">
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <h3>Admin</h3>
+                </div>
+                <ul class="sidebar-menu">
+                    <li><a href="#">Dashboard</a></li>
+                    <li><a href="#">Buyer Data</a></li>
+                    <li><a href="#">Seller Data</a></li>
+                    <li><a href="#">Crops Data</a></li>
+                    <li><a href="#">Settings</a></li>
+                    <li><a href="#">Logout</a></li>
+                </ul>
+            </div>
+            
+            <div class="main-content">
+                <h1>Welcome to Admin Dashboard</h1> 
+                <h1 id="tableHeading"></h1>
+                <div id="dashboardCards"></div> <!-- Added container for dashboard cards -->
+                <div id="tableContainer"></div>
+            </div>
+        </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+    const tableContainer = document.getElementById('tableContainer');
+    const tableHeading = document.getElementById('tableHeading');
+    const dashboardCards = document.getElementById('dashboardCards');
+
+    const menuItems = {
+        'Buyer Data': 'BUYER_DATA',
+        'Seller Data': 'SELLER_DATA',
+        'Crops Data': 'CROP_DATA'
+    };
+
+    const tableHeaders = {
+        BUYER_DATA: ['NAME', 'BUYER_EMAIL', 'PHONE_NO', 'ADDRESS','CITY' ],
+        SELLER_DATA: ['NAME', 'SELLER_EMAIL', 'PHONE_NO', 'SELLER_ADDRESS','CITY'],
+        CROP_DATA: ['CROPID', 'NAME', 'CATEGORY', 'PRICE' , 'QUANTITY', 'SELLER_EMAIL']
+    };
+
+
+    function generateTable(tableData, headers) {
+        tableContainer.innerHTML = ''; // Clear previous table
+        tableHeading.textContent = '';
+        dashboardCards.innerHTML = '';
+
+        const table = document.createElement('table');
+
+        // Create table header
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        headers.forEach(headerText => {
+            const th = document.createElement('th');
+            th.textContent = headerText;
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        // Create table body
+        const tbody = document.createElement('tbody');
+        tableData.forEach(rowData => {
+            const row = document.createElement('tr');
+            headers.forEach(header => {
+                const cell = document.createElement('td');
+                cell.textContent = rowData[header];
+                row.appendChild(cell);
+            });
+            tbody.appendChild(row);
+        });
+        table.appendChild(tbody);
+
+        // Append table to the container
+        tableContainer.appendChild(table);
+    }
+
+    let storedTableData = {};
+
+    async function fetchTableData() {
+        try {
+            const response = await fetch('/getTableData');
+            const tableData = await response.json();
+            storedTableData = tableData; // Store fetched data
+            return tableData;
+        } catch (error) {
+            console.error('Error:', error);
+            throw error;
+        }
+    }
+
+    function fetchAndDisplayData(tableType) {
+        if (storedTableData[tableType]) {
+            const data = storedTableData[tableType];
+            const headers = tableHeaders[tableType];
+            generateTable(data, headers);
+            tableHeading.textContent = tableType.replace('_', ' ');
+        }
+    }
+
+    async function displayDashboardCards() {
+        dashboardCards.innerHTML = ''; // Clear previous cards
+
+        try {
+            const tableData = await fetchTableData();
+
+            const data = [
+                { title: 'Buyers', count: tableData.BUYER_COUNT, description: 'Total Buyers' },
+                { title: 'Sellers', count: tableData.SELLER_COUNT, description: 'Total Sellers' },
+                { title: 'Crops', count: tableData.CROP_COUNT, description: 'Total Crops' },
+                { title: 'Orders', count: 24, description: 'Total Transactions in Progress' } // Assuming static count for Orders
+            ];
+
+            data.forEach(item => {
+                const card = document.createElement('div');
+                card.classList.add('card');
+
+                const cardTitle = document.createElement('h2');
+                cardTitle.textContent = item.title;
+                card.appendChild(cardTitle);
+
+                const cardCount = document.createElement('p');
+                cardCount.classList.add('count');
+                cardCount.textContent = item.count;
+                card.appendChild(cardCount);
+
+                const cardDescription = document.createElement('p');
+                cardDescription.textContent = item.description;
+                card.appendChild(cardDescription);
+
+                dashboardCards.appendChild(card);
+            });
+
+            tableContainer.innerHTML = ''; // Clear the table
+            tableHeading.textContent = ''; // Clear the table heading
+        } catch (err) {
+            console.error("Error displaying dashboard cards:", err);
+        }
+    }
+
+    document.querySelectorAll('.sidebar-menu li a').forEach(anchor => {
+        anchor.addEventListener('click', (event) => {
+            event.preventDefault();
+            const text = event.target.textContent;
+            if (text === 'Dashboard') {
+                displayDashboardCards();
+            } else {
+                const tableType = menuItems[text];
+                if (tableType) {
+                    fetchAndDisplayData(tableType);
+                }
+            }
+        });
+    });
+
+    // Load Dashboard Cards by default on page load
+    displayDashboardCards();
+});
+</script>
 </body>
 </html>
