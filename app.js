@@ -440,12 +440,6 @@ app.get('/getTableData', async (req, res) => {
   }
 });
 
-
-
-
-
-
-
 app.use(express.static(path.join(__dirname, 'public')));
 //Mainpages
 app.get('/', async (req, res) => {

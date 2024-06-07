@@ -6,20 +6,8 @@
     <title>Document</title>
     <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body, html {
-            height: 100%;
-            margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
-            background-image: url('/images/agri.jpeg'); /** Add your image path here */
-            background-size: cover;
-            background-position: center;
-        }
-        .error-message {
-            color: red;
-            margin-top: 10px; /* Adjust margin-top as needed */
-        }
-    </style>
+    <link rel="stylesheet" href="/CSS/adminpages/adminlogin.css">
+    <script src="/JS/adminpages/adminlogin.js" defer></script>
 </head>
 <body>
     <div class="d-flex justify-content-center align-items-center vh-100">
@@ -43,24 +31,5 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const errorMessage = urlParams.get('error');
-        if (errorMessage) {
-            document.querySelector('.error-message').textContent = errorMessage;
-        }
-        function resetFormFields() {
-            document.getElementById('loginForm').reset();
-        }
-
-        window.addEventListener('pageshow', function(event) {
-            if (event.persisted) {
-                resetFormFields();
-                fetch('/clearAdminSession', {
-                method: 'POST'
-        });
-            }
-        });
-    </script>
 </body>
 </html>

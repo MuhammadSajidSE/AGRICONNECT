@@ -6,28 +6,56 @@
     <title>Crop Data According to Person</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        body {
+            background-color: #fffcf7;
+        }
         .customcard {
-            width: 15rem;
+            width: 100%;
             margin: 10px;
             padding: 10px;
+            transition: transform 0.2s;
+        }
+        .customcard:hover {
+            transform: scale(1.05);
         }
         .card-img-top {
-            height: 100%; 
-            width: 100%; 
+            height: 150px;
+            width: 150px;
             object-fit: cover;
+            border-radius: 50%;
+            margin: 0 auto;
+            display: block;
+            border: 2px solid #ffffff;
         }
-        h3{
+        .card-body {
+            background-color: #ffffff;
             text-align: center;
+        }
+        .card-title {
+            font-size: 1.25rem;
+            color: #ffce8e;
+            margin-bottom: 0.75rem;
+        }
+        .card-text {
+            color: #6c757d;
+        }
+        h3 {
+            text-align: center;
+            margin-top: 1rem;
+            color: #ffc74e;
+        }
+        #card-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <br>
         <h3>Category: <span id="category"></span></h3>
         <h3>Crop Name: <span id="cropName"></span></h3>
-        <div class="row" id="card-container">
-        </div>
+        <div class="row" id="card-container"></div>
     </div>
 
     <script>
@@ -48,18 +76,18 @@
 
             data.forEach(row => {
                 const cardCol = document.createElement('div');
-                cardCol.className = 'col-md-4';
+                cardCol.className = 'col-lg-3 col-md-4 col-sm-6 mb-4'; // Adjusted column classes to allow 4 cards per row on large screens
 
                 const [cropId, name, category, quantity, price, sellerName, sellerEmail] = row;
                 const imageUrl = `/images/farmer.png`; // Assuming images are named after the crop names in lowercase
 
                 const cardHTML = `
-                    <div class="card customcard">
-                        <img class="card-img-top" src="${imageUrl}" alt="${name}" width="20px" height="20px">
+                    <div class="card customcard shadow-sm">
+                        <img class="card-img-top" src="${imageUrl}" alt="${name}">
                         <div class="card-body">
-                            <p class="card-text">Farmer Name : ${sellerName}</p>
-                            <p class="card-text">Price Per Keg : $${price}</p>
-                            <p class="card-text">Quantity in Kg : ${quantity}</p>
+                            <p class="card-text">Farmer Name: ${sellerName}</p>
+                            <p class="card-text">Price Per Kg: $${price}</p>
+                            <p class="card-text">Quantity in Kg: ${quantity}</p>
                         </div>
                     </div>
                 `;
