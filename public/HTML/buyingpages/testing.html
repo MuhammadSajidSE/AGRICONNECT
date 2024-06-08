@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Testing</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .card-custom {
+            margin: 16px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="my-4">Add to Card</h2>
+
+        <h3>Response:</h3>
+        <div id="cardContainer"></div>
+    </div>
+
+    <script>
+        window.onload = async () => {
+            const response = await fetch('http://localhost:3000/addcard', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+            displayCard(data);
+        };
+
+        function displayCard(data) {
+            const cardContainer = document.getElementById('cardContainer');
+            cardContainer.innerHTML = ''; // Clear previous content
+
+            const card = document.createElement('div');
+            card.className = 'card card-custom';
+
+            card.innerHTML = `
+                <div class="card-body">
+                    <h3 class="card-title">${data.NAME}</h3>
+                    <p class="card-text"><strong>Category:</strong> ${data.CATEGORY}</p>
+                    <p class="card-text"><strong>Quantity:</strong> ${data.QUANTITY}</p>
+                    <p class="card-text"><strong>Price:</strong> ${data.PRICE}</p>
+                    <p class="card-text"><strong>Seller Name:</strong> ${data.SELLER_NAME}</p>
+                    <p class="card-text"><strong>Seller Email:</strong> ${data.SELLER_EMAIL}</p>
+                </div>
+            `;
+
+            cardContainer.appendChild(card);
+        }
+    </script>
+</body>
+</html>

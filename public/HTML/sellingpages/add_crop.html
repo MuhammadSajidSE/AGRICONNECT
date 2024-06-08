@@ -7,47 +7,9 @@
     <title>Crop Information Input</title>
     <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-    <style>
-        body,
-        html {
-            height: 100%;
-            margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
-            background-image: url('/images/agri.jpeg');
-            /* Add your image path here */
-            background-size: cover;
-            background-position: center;
-        }
-
-        .form-container {
-            max-width: 500px;
-            margin: auto;
-            padding: 20px;
-            background-color: rgba(0, 0, 0, 0.648);
-            /* Slightly transparent background */
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
-            max-height: 600px; /* Decreased height */
-        }
-
-        .heading {
-            color: white;
-        }
-
-        /* Change background color to green */
-        .form-container.bg-green {
-            background-color: rgba(66, 143, 66, 0.5);
-            /* Green color with transparency */
-        }
-
-        /* Reduce margin between form inputs */
-        .form-group {
-            margin-bottom: 10px; /* Adjust as needed */
-        }
-    </style>
+    <link rel="stylesheet" href="/CSS/sellingpages/add_crop.css">
+    <script src="js/sellingpages/add_crop.js" defer></script>
 </head>
-
 <body class="d-flex justify-content-center align-items-center vh-100">
     <div class="form-container bg-green rounded"> <!-- Add bg-green class -->
         <h1 class="text-center mb-4 heading">Add Crop Information</h1>
@@ -76,57 +38,12 @@
                 <label for="quantity" class="heading">Quantity (units):</label>
                 <input type="number" class="form-control" name="quantity" id="quantity" min="0" required>
             </div>
-            <button name="submit" type="submit" class="btn btn-success btn-block" style="border-radius: 30px;">Insert Crop</button>
+            <button name="submit" type="submit" class="btn btn-success btn-block" style="border-radius: 30px;">Insert
+                Crop</button>
         </form>
     </div>
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script>
-        function populateCropNames() {
-            var categorySelect = document.getElementById("category");
-            var cropSelect = document.getElementById("cropname");
-            var selectedCategory = categorySelect.value;
-            cropSelect.innerHTML = "";
-            var fruits = [
-                'Apple', 'Banana', 'Orange', 'Mango', 'Strawberry',
-                'Grape', 'Pineapple', 'Watermelon', 'Kiwi', 'Papaya',
-                'Peach', 'Plum', 'Sapodilla','Date','flig','coconut',
-		        'Guava','Lychee','Melon', 'Pomergranate','Sapodilla',  
-            ];
-            var vegetables = [
-                'Potato', 'Tomato', 'Onion', 'Carrot', 'Cucumber',
-                'Lettuce', 'Cauliflower', 'Bell Pepper',
-                'Zucchini', 'Eggplant', 'Green Bean',
-                'Kale', 'Brussels Sprout','bitter-gourd','garlic',
-		        'ginger','nature','pumpkin','papaya','laddy-finger'
-            ];
-            var grains = [
-                'Wheat', 'Rice', 'Corn', 'Barley', 'Oats',
-                'Rye', 'Quinoa', 'Millet', 'Buckwheat', 'Sorghum','Hominy Corn',
-            ];
-            var crops = [];
-            switch (selectedCategory) {
-                case "Fruits":
-                    crops = fruits;
-                    break;
-                case "Vegetables":
-                    crops = vegetables;
-                    break;
-                case "Grains":
-                    crops = grains;
-                    break;
-                default:
-                    crops = [];
-            }
-            for (var i = 0; i < crops.length; i++) {
-                var option = document.createElement("option");
-                option.value = crops[i];
-                option.text = crops[i];
-                cropSelect.appendChild(option);
-            }
-        }
-    </script>
 </body>
-
 </html>

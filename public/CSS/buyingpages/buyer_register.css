@@ -1,0 +1,44 @@
+body, html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background-image: url('/images/agri.jpeg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.card {
+    background-color: rgba(66, 107, 71, 0.7);
+    border-radius: 11px;
+    width: 350px;
+    margin: 0; /* Remove any extra margin */
+}
+.card-body {
+    padding: 20px;
+}
+.form-group {
+    margin-bottom: 10px;
+}
+.form-control {
+    padding: 5px;
+}
+.btn-container {
+    display: flex;
+    justify-content: space-between;
+}
+.btn-container .btn {
+    flex: 0 0 48%;
+    padding: 10px;
+    border-radius: 20px;
+}
+.error-message {
+    display: none;
+    color: red;
+    font-size: 12px;
+    margin-top: 5px;
+}

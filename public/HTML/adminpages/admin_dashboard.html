@@ -3,19 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="/CSS/adminpages/admin_dashboard.css">
+    <script src="/JS/adminpages/admin_dashboard.js" defer></script>
 </head>
 <body>
-    <h1>Admin Dashboard</h1>
-    <a href="">seller data</a>
-    <br>
-    <a href="">buyer data</a>
-    <br>
-    <a href="">selling crop data</a>
-    <br>
-    <a href="">sold crop data</a>
-    <br>
-    <br>
-    <a href="\"><button>Back to home</button></a>
+    <body>
+        <div class="container">
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <h3>Admin</h3>
+                </div>
+                <ul class="sidebar-menu">
+                    <li><a href="#">Dashboard</a></li>
+                    <li><a href="#">Buyer Data</a></li>
+                    <li><a href="#">Seller Data</a></li>
+                    <li><a href="#">Crops Data</a></li>
+                    <li><a href="#">Settings</a></li>
+                    <li><a href="#">Logout</a></li>
+                </ul>
+            </div>
+            
+            <div class="main-content">
+                <h1>Welcome to Admin Dashboard</h1> 
+                <h1 id="tableHeading"></h1>
+                <div id="dashboardCards"></div> <!-- Added container for dashboard cards -->
+                <div id="tableContainer"></div>
+            </div>
+        </div>
 </body>
 </html>
