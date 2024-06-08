@@ -5,7 +5,7 @@ const session = require('express-session');
 const oracledb = require("oracledb");
 const notifier = require('node-notifier');
 const { count } = require('console');
-
+const axios = require('axios');
 // oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
 
 const app = express();
@@ -381,6 +381,7 @@ app.get('/person_category', async (req, res) => {
   
   console.log('Query executed successfully. Rows:', result.rows);
   res.json(result.rows);
+
 });
 
 
@@ -437,6 +438,20 @@ app.get('/getTableData', async (req, res) => {
   } catch (error) {
       console.error('Error fetching tableData:', error);
       res.status(500).send('Internal Server Error');
+  }
+});
+
+let cropData = null;
+app.post('/test', (req, res) => {
+   cropData = req.body;
+  console.log('Received crop data:', cropData);
+  res.send(cropData);
+});
+app.get('/addcard', (req, res) => {
+  if (cropData) {
+    res.send(cropData);
+  } else {
+    res.status(404).send({ message: 'No crop data found' });
   }
 });
 
@@ -499,12 +514,16 @@ app.get('/buyer_dashboard',requirebuyer, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'HTML','buyingpages', 'buyer_dashboard.html'));
 });
 
-app.get('/person_category',requirebuyer, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'HTML','buyingpages', 'person_category.html'));
-});
-
 app.get('/crop_data_according_to_person',requirebuyer, (req, res) => {
   res.sendFile(path.join(__dirname, 'public','HTML','buyingpages', 'crop_data_according_to_person.html'));
+});
+
+// app.get('/add_to_card',requirebuyer, (req, res) => {
+//   res.sendFile(path.join(__dirname, 'public','HTML','buyingpages', 'add_to_card_page.html'));
+// });
+
+app.get('/test', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public','HTML','buyingpages', 'testing.html'));
 });
 
 const server = app.listen(port, () => {

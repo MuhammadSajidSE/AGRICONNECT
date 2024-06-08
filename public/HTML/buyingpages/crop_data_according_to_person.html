@@ -14,6 +14,7 @@
             margin: 10px;
             padding: 10px;
             transition: transform 0.2s;
+            cursor: pointer;
         }
         .customcard:hover {
             transform: scale(1.05);
@@ -70,19 +71,27 @@
         document.getElementById('cropName').textContent = cropName;
 
         async function fetchData() {
+            console.log('Fetching data for cropname:', cropName, 'and category:', category);
             const response = await fetch(`/person_category?cropname=${cropName}&category=${category}`);
             const data = await response.json();
+            console.log('Received data:', data);
             const cardContainer = document.getElementById('card-container');
-
+            cardContainer.innerHTML = ''; // Clear previous content
             data.forEach(row => {
                 const cardCol = document.createElement('div');
                 cardCol.className = 'col-lg-3 col-md-4 col-sm-6 mb-4'; // Adjusted column classes to allow 4 cards per row on large screens
 
-                const [cropId, name, category, quantity, price, sellerName, sellerEmail] = row;
+                const cropId = row[0];
+                const name = row[1];
+                const category = row[2];
+                const quantity = row[3];
+                const price = row[4];
+                const sellerName = row[5];
+                const sellerEmail = row[6];
                 const imageUrl = `/images/farmer.png`; // Assuming images are named after the crop names in lowercase
 
                 const cardHTML = `
-                    <div class="card customcard shadow-sm">
+                    <div class="card customcard shadow-sm" data-cropid="${cropId}" data-name="${name}" data-category="${category}" data-quantity="${quantity}" data-price="${price}" data-sellername="${sellerName}" data-selleremail="${sellerEmail}">
                         <img class="card-img-top" src="${imageUrl}" alt="${name}">
                         <div class="card-body">
                             <p class="card-text">Farmer Name: ${sellerName}</p>
@@ -93,6 +102,39 @@
                 `;
                 cardCol.innerHTML = cardHTML;
                 cardContainer.appendChild(cardCol);
+
+                const card = cardCol.querySelector('.customcard');
+                card.addEventListener('click', function() {
+                    console.log('Card clicked');
+                    const cropData = {
+                        CROPID: cropId,
+                        NAME: name,
+                        CATEGORY: category,
+                        QUANTITY: quantity,
+                        PRICE: price,
+                        SELLER_NAME: sellerName,
+                        SELLER_EMAIL: sellerEmail
+                    };
+
+                    console.log('Sending crop data:', cropData);
+
+                    // Send data to /testing and navigate
+                    fetch('/test', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(cropData)
+                    }).then(response => {
+                        if (response.ok) {
+                            window.location.href = '/test';
+                        } else {
+                            console.error('Failed to send data to /testing');
+                        }
+                    }).catch(error => {
+                        console.error('Error:', error);
+                    });
+                });
             });
         }
 
