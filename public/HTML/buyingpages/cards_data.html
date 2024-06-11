@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buyer Card Table</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="mb-4">Buyer Card Table</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Crop Name</th>
+                    <th>Quantity</th>
+                    <th>Amount</th>
+                    <th>Seller Name</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="buyerCardTableBody">
+                <!-- Table rows will be dynamically added here -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Bootstrap JS and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        async function fetchData() {
+            const response = await fetch('/buyer_card_table');
+            const data = await response.json();
+            return data; 
+        }
+
+        async function displayData() {
+            const buyerCardTableBody = document.getElementById('buyerCardTableBody');
+            buyerCardTableBody.innerHTML = '';
+
+            const data = await fetchData();
+
+            data.forEach(row => {
+                const tableRow = document.createElement('tr');
+
+                const cropNameCell = document.createElement('td');
+                cropNameCell.textContent = row.CROPNAME;
+                tableRow.appendChild(cropNameCell);
+
+                const quantityCell = document.createElement('td');
+                quantityCell.textContent = row.QUANTITY;
+                tableRow.appendChild(quantityCell);
+
+                const amountCell = document.createElement('td');
+                amountCell.textContent = row.AMOUNT;
+                tableRow.appendChild(amountCell);
+
+                const sellerNameCell = document.createElement('td');
+                sellerNameCell.textContent = row.SELLER_NAME;
+                tableRow.appendChild(sellerNameCell);
+
+                const actionCell = document.createElement('td');
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.className = 'btn btn-danger btn-sm';
+                // Set data attributes for card ID, crop ID, and quantity
+                deleteButton.dataset.cardId = row.CRAD_ID;
+                deleteButton.dataset.cropId = row.CROPID;
+                deleteButton.dataset.quantity = row.QUANTITY;
+                deleteButton.onclick = function() {
+                    // Call deleteRow function with card ID, crop ID, and quantity as parameters
+                    deleteRow(row.CRAD_ID, row.CROPID, row.QUANTITY);
+                    // Remove the row from the table
+                    tableRow.remove();
+                };
+                actionCell.appendChild(deleteButton);
+                tableRow.appendChild(actionCell);
+                buyerCardTableBody.appendChild(tableRow);
+            });
+        }
+
+        async function deleteRow(cardId, cropId, quantity) {
+            // Send the card ID, crop ID, and quantity to the server
+            const response = await fetch('/buyer_card_table', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ cardId, cropId, quantity })
+            });
+            // Handle the server response if needed
+        }
+
+        // Call displayData function when the page loads
+        window.onload = displayData;
+    </script>
+</body>
+</html>

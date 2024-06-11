@@ -89,51 +89,53 @@
             <!-- Cards will be generated here by JavaScript -->
         </div>
     </div>
-
     <script>
-        var fetchvegetable;
-        fetch('/vegitable_detail/page')
-            .then(response => response.json())
-            .then(data => {
-                fetchvegetable = data;
+        async function fetchDataAndRender() {
+            try {
+                const response = await fetch('/vegitable_detail/page');
+                const fetchvegetable = await response.json();
+                console.log('Fetched Data:', fetchvegetable);
+
                 vegetables.forEach((element, index, arr) => {
-                    var accurance = counting(arr[index]["name"], fetchvegetable);
+                    const accurance = counting(arr[index]["name"], fetchvegetable);
                     arr[index]["available"] = accurance;
                 });
+
                 renderCards();
-            })
-            .catch(error => {
+            } catch (error) {
                 console.error('Error fetching data:', error);
-            });
+            }
+        }
+
+        window.onload = fetchDataAndRender;
 
         const vegetables = [
-        { name: 'Potato', image: '/images/potato.png', available: 4 },
-        { name: 'Tomato', image: '/images/tomato.png', available: 4 },
-        { name: 'Onion', image: '/images/onion.png', available: 4 },
-        { name: 'Carrot', image: '/images/carrot.png', available: 4 },
-        { name: 'Cucumber',image: '/images/cucumber.png', available: 6 },
-        { name: 'Lettuce', image: '/images/lettuce.png', available: 6 },
-        { name: 'Cauliflower', image: '/images/cauliflower.png', available: 10 },
-	{ name: 'Bell Pepper',image: '/images/dates.png', available: 4 },
-        { name: 'Zucchini', image: '/images/zucchini.png', available: 4 },
-        { name: 'Eggplant', image: '/images/eggplant.png', available: 4 },
-        { name: 'Green Bean',image: '/images/green-beans.png', available: 4 },
-        { name: 'Kale', image: '/images/kale.png', available: 6 },
-        { name: 'Brussels Sprout',image: '/images/brussel-sprouts.png', available: 6 },
-        { name: 'Bitter-gourd',image: '/images/bitter-gourd.png', available: 10 },
-	{ name: 'Garlic',image: '/images/garlic.png', available: 10 },
-        { name: 'Ginger',image: '/images/ginger.png', available: 10 },
-        { name: 'Peppermint', image: '/images/nature.png', available: 6 },
-        { name: 'Pumpkin', image: '/images/pumpkin.png', available: 10 },
-	{ name: 'Papaya', image: '/images/papaya.png', available: 10 },
-	{ name: 'laddy-finger', image: '/images/vegetable.png', available: 10 },
-    ];
-
+            { name: 'Potato', image: '/images/potato.png', available: 4 },
+            { name: 'Tomato', image: '/images/tomato.png', available: 4 },
+            { name: 'Onion', image: '/images/onion.png', available: 4 },
+            { name: 'Carrot', image: '/images/carrot.png', available: 4 },
+            { name: 'Cucumber', image: '/images/cucumber.png', available: 6 },
+            { name: 'Lettuce', image: '/images/lettuce.png', available: 6 },
+            { name: 'Cauliflower', image: '/images/cauliflower.png', available: 10 },
+            { name: 'Bell Pepper', image: '/images/dates.png', available: 4 },
+            { name: 'Zucchini', image: '/images/zucchini.png', available: 4 },
+            { name: 'Eggplant', image: '/images/eggplant.png', available: 4 },
+            { name: 'Green Bean', image: '/images/green-beans.png', available: 4 },
+            { name: 'Kale', image: '/images/kale.png', available: 6 },
+            { name: 'Brussels Sprout', image: '/images/brussel-sprouts.png', available: 6 },
+            { name: 'Bitter-gourd', image: '/images/bitter-gourd.png', available: 10 },
+            { name: 'Garlic', image: '/images/garlic.png', available: 10 },
+            { name: 'Ginger', image: '/images/ginger.png', available: 10 },
+            { name: 'Peppermint', image: '/images/nature.png', available: 6 },
+            { name: 'Pumpkin', image: '/images/pumpkin.png', available: 10 },
+            { name: 'Papaya', image: '/images/papaya.png', available: 10 },
+            { name: 'laddy-finger', image: '/images/vegetable.png', available: 10 },
+        ];
 
         function counting(given, fetchvegetable) {
-            var count = 0;
+            let count = 0;
             fetchvegetable.forEach(element => {
-                if (element === given) {
+                if (element[1] === given) {
                     count++;
                 }
             });
@@ -142,14 +144,14 @@
 
         function renderCards() {
             const cardContainer = document.getElementById('card-container');
-            cardContainer.innerHTML = ''; // Clear previous cards
+            cardContainer.innerHTML = '';
 
-            vegetables.forEach((vegetable, index) => {
+            vegetables.forEach((vegetable) => {
                 const cardCol = document.createElement('div');
                 cardCol.className = 'col-md-4 col-sm-6 col-lg-3 mb-4';
 
                 const cardHTML = `
-                    <div class="card customcard" onclick="navigateToCategory('${vegetable.name}')">
+                    <div class="card customcard" onclick="navigateToCategory('${vegetable.name}','${vegetable.image}')">
                         <img class="card-img-top" src="${vegetable.image}" alt="Card image cap">
                         <div class="card-body">
                             <div class="titles">
@@ -167,18 +169,15 @@
             });
         }
 
-        function navigateToCategory(vegetableName) {
+        function navigateToCategory(grainName, grainimage) {
             const category = 'Vegetables';
-            const url = `/crop_data_according_to_person?cropname=${encodeURIComponent(vegetableName)}&category=${encodeURIComponent(category)}`;
+            const url = `/crop_data_according_to_person?cropname=${encodeURIComponent(grainName)}&category=${encodeURIComponent(category)}&cropimage=${encodeURIComponent(grainimage)}`;
             window.location.href = url;
+        
         }
-
+        
     </script>
+    
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-</body>
-
-</html>
-
+    <script src="https://cdn.jsdelivr.net/npm/@popper

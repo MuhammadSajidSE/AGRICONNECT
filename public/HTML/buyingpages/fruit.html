@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -89,23 +90,26 @@
             <!-- Cards will be generated here by JavaScript -->
         </div>
     </div>
-
     <script>
-        var fetchfruit;
-        fetch('/fruit_detail/page')
-            .then(response => response.json())
-            .then(data => {
-                fetchfruit = data;
+        async function fetchDataAndRender() {
+            try {
+                const response = await fetch('/fruit_detail/page');
+                const fetchfruit = await response.json();
+                console.log('Fetched Data:', fetchfruit);
+
                 fruits.forEach((element, index, arr) => {
-                    var accurance = counting(arr[index]["name"], fetchfruit);
+                    const accurance = counting(arr[index]["name"], fetchfruit);
                     arr[index]["available"] = accurance;
                 });
-                renderCards();
-            })
-            .catch(error => {
-                console.error('Error fetching data:', error);
-            });
 
+                renderCards();
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        }
+
+        window.onload = fetchDataAndRender;
+        
         const fruits = [
             { name: 'Apple', image: '/images/apple.png', available: 4 },
             { name: 'Banana', image: '/images/banana.png', available: 4 },
@@ -129,10 +133,10 @@
             { name: 'Pomegranate', image: '/images/pomegranate.png', available: 10 },
         ];
 
-        function counting(given, fetchfruit) {
-            var count = 0;
-            fetchfruit.forEach(element => {
-                if (element === given) {
+        function counting(given, fetchvegetable) {
+            let count = 0;
+            fetchvegetable.forEach(element => {
+                if (element[1] === given) {
                     count++;
                 }
             });
@@ -143,38 +147,34 @@
             const cardContainer = document.getElementById('card-container');
             cardContainer.innerHTML = ''; // Clear previous cards
 
-            fruits.forEach((fruit, index) => {
-                // Create a new div element for the card
+            fruits.forEach((fruit) => {
                 const cardCol = document.createElement('div');
                 cardCol.className = 'col-md-4 col-sm-6 col-lg-3';
 
-                // Create the card HTML
                 const cardHTML = `
-                <div class="card customcard" onclick="navigateToCategory('${fruit.name}')">
-                    <img class="card-img-top" src="${fruit.image}" alt="Card image cap">
-                    <div class="card-body">
-                        <div class="titles">
-                            <h5 class="card-title">${fruit.name}</h5>
-                            <h6 class="card-title">Available ${fruit.available}</h6>
-                        </div>
-                        <div class="btn-container">
-                            <a href="#" class="btn btn-success">Go somewhere</a>
+                    <div class="card customcard" onclick="navigateToCategory('${fruit.name}', '${fruit.image}')">
+                        <img class="card-img-top" src="${fruit.image}" alt="Card image cap">
+                        <div class="card-body">
+                            <div class="titles">
+                                <h5 class="card-title">${fruit.name}</h5>
+                                <h6 class="card-title">Available ${fruit.available}</h6>
+                            </div>
+                            <div class="btn-container">
+                                <a href="#" class="btn btn-success">Go somewhere</a>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
+                `;
                 cardCol.innerHTML = cardHTML;
                 cardContainer.appendChild(cardCol);
             });
         }
-
-        function navigateToCategory(fruitName) {
+        function navigateToCategory(fruitName, fruitImage) {
             const category = 'Fruits';
-            const url = `/crop_data_according_to_person?cropname=${encodeURIComponent(fruitName)}&category=${encodeURIComponent(category)}`;
+            const url = `/crop_data_according_to_person?cropname=${encodeURIComponent(fruitName)}&category=${encodeURIComponent(category)}&cropimage=${encodeURIComponent(fruitImage)}`;
             window.location.href = url;
         }
     </script>
-
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
