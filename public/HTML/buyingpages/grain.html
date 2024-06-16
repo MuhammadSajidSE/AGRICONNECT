@@ -91,20 +91,24 @@
     </div>
 
     <script>
-        var fetchgrains;
-        fetch('/grains_detail/page')
-            .then(response => response.json())
-            .then(data => {
-                fetchgrains = data;
+        async function fetchDataAndRender() {
+            try {
+                const response = await fetch('/grains_detail/page');
+                const fetchgrain = await response.json();
+                console.log('Fetched Data:', fetchgrain);
+
                 grains.forEach((element, index, arr) => {
-                    var accurance = counting(arr[index]["name"], fetchgrains);
+                    const accurance = counting(arr[index]["name"], fetchgrain);
                     arr[index]["available"] = accurance;
                 });
+
                 renderCards();
-            })
-            .catch(error => {
+            } catch (error) {
                 console.error('Error fetching data:', error);
-            });
+            }
+        }
+
+        window.onload = fetchDataAndRender;
 
         const grains = [
             { name: 'Wheat', image: '/images/wheat.png', available: 4 },
@@ -120,10 +124,10 @@
             { name: 'Hominy', image: '/images/hominy.png', available: 4 },
         ];
 
-        function counting(given, fetchgrains) {
-            var count = 0;
-            fetchgrains.forEach(element => {
-                if (element === given) {
+        function counting(given, fetchvegetable) {
+            let count = 0;
+            fetchvegetable.forEach(element => {
+                if (element[1] === given) {
                     count++;
                 }
             });
@@ -139,7 +143,7 @@
                 cardCol.className = 'col-md-4 col-sm-6 col-lg-3 mb-4';
 
                 const cardHTML = `
-                    <div class="card customcard" onclick="navigateToCategory('${grain.name}')">
+                    <div class="card customcard" onclick="navigateToCategory('${grain.name}', '${grain.image}')">
                         <img class="card-img-top" src="${grain.image}" alt="Card image cap">
                         <div class="card-body">
                             <div class="titles">
@@ -157,9 +161,9 @@
             });
         }
 
-        function navigateToCategory(grainName) {
+        function navigateToCategory(grainName,grainimage) {
             const category = 'Grains';
-            const url = `/crop_data_according_to_person?cropname=${encodeURIComponent(grainName)}&category=${encodeURIComponent(category)}`;
+            const url = `/crop_data_according_to_person?cropname=${encodeURIComponent(grainName)}&category=${encodeURIComponent(category)}&cropimage=${encodeURIComponent(grainimage)}`;
             window.location.href = url;
         }
     </script>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Testing</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .imagebox {
+            width: 400px;
+            height: 400px;
+            background-color: rgb(255, 248, 228);
+            padding: 40px;
+            border: 2px solid rgba(238, 238, 238, 0.895);
+            border-radius: 100%;
+        }
+
+        .imagebox img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .description {
+            width: 400px;
+            height: 400px;
+            background-color: rgb(243, 243, 243);
+            padding: 20px;
+            border-radius: 20px;
+        }
+
+        .description h2 {
+            text-align: center;
+            font-size: 35px;
+            margin-top: 10px;
+        }
+
+        .secction {
+            margin-top: 80px;
+            justify-content: center;
+        }
+
+        .buttonwid {
+            width: 200px;
+            border-radius: 20px;
+            height: 40px;
+        }
+
+        .inputtag {
+            border-radius: 20px;
+        }
+
+        h4 {
+            color: rgb(255, 173, 72);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="cardContainer"></div>
+    <script>
+        let crop = {};
+        window.onload = async () => {
+            try {
+                const response = await fetch('http://localhost:3001/addcard', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                displayCard(data);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        };
+
+        function displayCard(data) {
+            const cardContainer = document.getElementById('cardContainer');
+            cardContainer.innerHTML = ''; // Clear previous content
+
+            const card = document.createElement('div');
+            card.className = 'card card-custom';
+
+            crop = data.CROP;
+            const imageUrl = data.img;
+
+            card.innerHTML = `
+            <div class="container">
+                <div class="row secction align-items-center">
+                    <div class="col-md-6 d-flex justify-content-center">
+                        <div class="imagebox">
+                            <img src="${imageUrl}" alt="${crop.NAME}">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="description text-center">
+                            <h2>Category: ${crop.CATEGORY}</h2>
+                            <h3>Crop Name: ${crop.NAME}</h3>
+                            <h4>Per Kg Price: $${crop.PRICE}</h4>
+                            <h4>Seller name: ${crop.SELLER_NAME}</h4>
+                            <h4>Quantity Available: ${crop.QUANTITY} Kg</h4>
+
+                            <br>
+                            <br>
+                            <div class="input-group mb-3 ">
+                                <div class="input-group-prepend">
+                                </div>
+                                <input type="number" class="form-control inputtag" placeholder="Enter Quantity" name="myInput">
+                                <div class="input-group-append">
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-success" onclick="notification()">Add to Cart</button>
+                            <p id="totalAmount">Total amount: </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            `;
+
+            cardContainer.appendChild(card);
+        }
+
+        async function notification() {
+            var inputElement = document.getElementsByName('myInput')[0].value;
+            var inputQuantity = Number(inputElement); // Convert input value to a number
+            if (inputQuantity > crop.QUANTITY) {
+                alert("Input Quantity is not available");
+            } else {
+                var cardData = {
+                    'cropid': crop.CROPID,
+                    'selleremail': crop.SELLER_EMAIL,
+                    'quantity': inputQuantity,
+                    'amount': inputQuantity * crop.PRICE
+                };
+                console.log(cardData);
+
+                try {
+                    const response = await fetch('http://localhost:3001/cadsdata', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(cardData)
+                    });
+
+                    if (response.ok) {
+                        const responseData = await response.json();
+                        console.log('Response:', responseData);
+                        alert("Data successfully sent to server");
+
+                        // Display the total amount in the description section
+                        document.getElementById('totalAmount').innerText = `Total amount: ${responseData.data.amount}`;
+                    } else {
+                        console.error('Failed to send data:', response.statusText);
+                        alert("Failed to send data to server");
+                    }
+                } catch (error) {
+                    console.error('Error sending data:', error);
+                    alert("Error sending data to server");
+                }
+            }
+        }
+    </script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+
+</html>

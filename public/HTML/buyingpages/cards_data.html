@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buyer Card Table</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f9f9f9;
+        }
+        .conatinersbuyer {
+            display: flex;
+            height: 85vh;
+        }
+        .sidebar {
+            width: 230px;
+            background-color: #343a40;
+            color: white;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            margin-left: -15px;
+            border-top-right-radius: 10px;
+            margin-top: -88px;
+            position: sticky;
+            top: 0;
+            height: 100vh; /* Ensure it covers the full viewport height */
+            overflow-y: auto;
+        }
+        .sidebar .btn {
+            margin-bottom: 10px;
+            width: 100%;
+            background-color: transparent;
+            color: white;
+            border: none;
+            text-align: left;
+            padding: 10px 15px;
+        }
+        .sidebar .btn:hover {
+            background-color: #495057;
+        }
+        .cardtable {
+            flex-grow: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto; /* Ensure it scrolls if the content is too long */
+        }
+        .table thead th {
+            background-color: #ffbf92; /* SaddleBrown */
+            color: rgb(0, 0, 0);
+            position: sticky;
+            top: 0;
+            z-index: 1; /* Ensure it stays above the table rows */
+        }
+        .table tbody tr:nth-child(even) {
+            background-color: #ffe2bb; /* BurlyWood */
+        }
+        .table tbody tr:nth-child(odd) {
+            background-color: #fff3dd; /* Wheat */
+        }
+        .total-amount {
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        .confirm-btn {
+            align-self: flex-end;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <h2 class="mt-4 mb-4" style="text-align: center; color:rgb(0, 142, 0);">Buyer Card Table</h2>
+        <div class="conatinersbuyer">
+            <div class="sidebar">
+                <button class="btn" id="startshopping">Start Buy Crops</button>
+                <button class="btn btn-success" id="showCardsBtn">Show Cards Crops</button>
+                <button class="btn" id="btn2">Show Order Crops</button>
+                <button class="btn" id="btn3">Show Bought Crops</button>
+                <button class="btn" id="logout">Log Out</button>
+            </div>
+            <div class="cardtable">
+                <table class="table table-striped" id="buyerCardTable" style="display: none;">
+                    <thead>
+                        <tr id="tableHeader">
+                            <!-- Header columns will be dynamically added here -->
+                        </tr>
+                    </thead>
+                    <tbody id="buyerCardTableBody">
+                        <!-- Table rows will be dynamically added here -->
+                    </tbody>
+                </table>
+                <div class="total-amount" id="totalAmount" style="display: none;">Total Amount: $0</div>
+                <button class="btn btn-success confirm-btn" id="confirmBtn" style="display: none;" onclick="cardToOrder()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        async function fetchData(endpoint) {
+            const response = await fetch(`/buyer_card_table?data=${endpoint}`);
+            const data = await response.json();
+            return data;
+        }
+
+        function createTableHeader(dataType) {
+            const tableHeader = document.getElementById('tableHeader');
+            tableHeader.innerHTML = '';
+            const headers = ['Crop Name', 'Quantity', 'Amount', 'Seller Name', 'Seller Email', 'Seller City'];
+            if (dataType === 'orders') {
+                headers.push('Seller Phone', 'Action');
+            } else if (dataType === 'cards') {
+                headers.push('Action');
+            }
+            headers.forEach(headerText => {
+                const th = document.createElement('th');
+                th.textContent = headerText;
+                tableHeader.appendChild(th);
+            });
+        }
+
+        async function displayData(dataType) {
+            createTableHeader(dataType);
+            const buyerCardTableBody = document.getElementById('buyerCardTableBody');
+            buyerCardTableBody.innerHTML = '';
+
+            const data = await fetchData(dataType);
+            let totalAmount = 0;
+
+            data[dataType].forEach(row => {
+                const tableRow = document.createElement('tr');
+
+                const cropNameCell = document.createElement('td');
+                cropNameCell.textContent = row.CROPNAME;
+                tableRow.appendChild(cropNameCell);
+
+                const quantityCell = document.createElement('td');
+                quantityCell.textContent = row.QUANTITY;
+                tableRow.appendChild(quantityCell);
+
+                const amountCell = document.createElement('td');
+                amountCell.textContent = row.AMOUNT;
+                tableRow.appendChild(amountCell);
+                totalAmount += parseFloat(row.AMOUNT);
+
+                const sellerNameCell = document.createElement('td');
+                sellerNameCell.textContent = row.SELLER_NAME;
+                tableRow.appendChild(sellerNameCell);
+
+                const sellerEmailCell = document.createElement('td');
+                sellerEmailCell.textContent = row.EMAIL;
+                tableRow.appendChild(sellerEmailCell);
+
+                const sellerCityCell = document.createElement('td');
+                sellerCityCell.textContent = row.SELLER_CITY;
+                tableRow.appendChild(sellerCityCell);
+
+                if (dataType === 'orders') {
+                    const sellerPhoneCell = document.createElement('td');
+                    sellerPhoneCell.textContent = row.SELLER_NO;
+                    tableRow.appendChild(sellerPhoneCell);
+
+                    const actionCell = document.createElement('td');
+                    const cancelButton = document.createElement('button');
+                    cancelButton.textContent = 'Cancel Order';
+                    cancelButton.className = 'btn btn-danger btn-sm';
+                    cancelButton.dataset.cardId = row.CRAD_ID;
+                    cancelButton.dataset.cropId = row.CROPID;
+                    cancelButton.dataset.quantity = row.QUANTITY;
+                    cancelButton.onclick = function() {
+                        deleteRow(row.CRAD_ID, row.CROPID, row.QUANTITY);
+                        tableRow.remove();
+                        totalAmount -= parseFloat(row.AMOUNT);
+                        updateTotalAmount(totalAmount);
+                    };
+                    actionCell.appendChild(cancelButton);
+                    tableRow.appendChild(actionCell);
+                } else if (dataType === 'cards') {
+                    const actionCell = document.createElement('td');
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.className = 'btn btn-danger btn-sm';
+                    deleteButton.dataset.cardId = row.CRAD_ID;
+                    deleteButton.dataset.cropId = row.CROPID;
+                    deleteButton.dataset.quantity = row.QUANTITY;
+                    deleteButton.onclick = function() {
+                        deleteRow(row.CRAD_ID, row.CROPID, row.QUANTITY);
+                        tableRow.remove();
+                        totalAmount -= parseFloat(row.AMOUNT);
+                        updateTotalAmount(totalAmount);
+                    };
+                    actionCell.appendChild(deleteButton);
+                    tableRow.appendChild(actionCell);
+                }
+
+                buyerCardTableBody.appendChild(tableRow);
+            });
+
+            updateTotalAmount(totalAmount);
+            document.getElementById('totalAmount').style.display = 'block';
+            document.getElementById('confirmBtn').style.display = (dataType === 'cards') ? 'block' : 'none';
+        }
+
+        async function deleteRow(cardId, cropId, quantity) {
+            const response = await fetch('/buyer_card_table', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ cardId, cropId, quantity })
+            });
+        }
+
+        async function cardToOrder() {
+            console.log('Confirm button clicked');
+            try {
+                const response = await fetch('/confirmend_card', {
+                    method: 'GET',
+                });
+                if (response.ok) {
+                    alert('Order confirmed');
+                } else {
+                    alert('Error confirming order');
+                }
+            } catch (error) {
+                console.error('Error in cardToOrder function:', error);
+                alert('Error confirming order');
+            }
+        }
+        function updateTotalAmount(totalAmount) {
+            const totalAmountElement = document.getElementById('totalAmount');
+            totalAmountElement.textContent = `Total Amount: $${totalAmount.toFixed(2)}`;
+        }
+        document.getElementById('showCardsBtn').onclick = function() {
+            const table = document.getElementById('buyerCardTable');
+            table.style.display = 'table';
+            displayData('cards');
+        };
+        document.getElementById('btn2').onclick = function() {
+            const table = document.getElementById('buyerCardTable');
+            table.style.display = 'table';
+            displayData('orders');
+        };
+        document.getElementById('btn3').onclick = function() {
+            const table = document.getElementById('buyerCardTable');
+            table.style.display = 'table';
+            displayData('bought');
+        };
+        document.getElementById('startshopping').onclick = function() {
+            window.location.href = 'crop_detail';
+        };
+        document.getElementById('logout').onclick = function() {
+            window.location.href = 'buyer_register';
+        };
+    </script>
+</body>
+</html>
