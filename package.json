@@ -22,6 +22,7 @@
     "child_process": "^1.0.2",
     "express": "^4.19.2",
     "express-session": "^1.18.0",
+    "node-localstorage": "^3.0.5",
     "node-notifier": "^10.0.1",
     "oracledb": "^5.4.0"
   }

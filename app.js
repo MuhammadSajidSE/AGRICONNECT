@@ -6,7 +6,8 @@ const notifier = require("node-notifier");
 const axios = require("axios");
 const bodyParser = require("body-parser");
 const { Console } = require("console");
-
+const { LocalStorage } = require('node-localstorage');
+const localStorage = new LocalStorage('./scratch');
 const app = express(); // Initialize express before using it
 
 const port = 3001;
@@ -48,9 +49,7 @@ app.post("/buyer_register", async (req, res) => {
       res.redirect("/buyer_register?error=Email%20already%20exists");
     } else {
       await buyer_registers(buyer_register);
-      req.session.isbuyerLoggedIn = true;
-      req.session.buyerType = "buyer";
-      res.redirect("/buyer_dashboard");
+      res.redirect("/buyer_login");
     }
   } catch (error) {
     console.error("Error during buyer registration:", error); // Log the error
@@ -67,7 +66,6 @@ async function checkEmailExistbuyer(email) {
       { email: email.toLowerCase() }
     );
     await connection.close();
-
     return result.rows.length > 0;
   } catch (error) {
     console.error("Error checking email existence:", error);
@@ -134,24 +132,18 @@ app.post("/seller_register", async (req, res) => {
     city: req.body.city, // Add the city field
   };
   try {
-    // Server-side validation to check if the email field is unique
     const emailExists = await checkEmailExistsseller(sell_register.email);
     if (emailExists) {
-      // Redirect with error message
       res.redirect("/seller_register?error=Email%20already%20exists");
     } else {
       await seller_registers(sell_register);
-      req.session.issellerLoggedIn = true;
-      req.session.sellerType = "seller";
-      res.redirect("/seller_view");
+      res.redirect("/seller_login");
     }
   } catch (error) {
-    // Send a response to the client without logging the error to the terminal
     res.status(500).send("Internal Server Error");
   }
 });
 
-// login codes
 app.post("/adminlogin", async (req, res) => {
   const { email, password } = req.body;
   console.log("Received login request:", { email, password });
@@ -164,8 +156,8 @@ app.post("/adminlogin", async (req, res) => {
     );
     console.log("Query result:", result);
     if (result.rows.length > 0) {
-      req.session.isAdminLoggedIn = true;
-      req.session.adminType = "admin";
+      localStorage.setItem('adminemial',email );
+      const value = localStorage.getItem('adminemial'); 
       res.redirect("/admin_dashboard");
     } else {
       res.redirect("/adminlogin?error=Invalid%20Email%20or%20Password");
@@ -189,10 +181,8 @@ app.post("/buyer_login", async (req, res) => {
     );
     console.log("Query result:", result);
     if (result.rows.length > 0) {
-      req.session.isbuyerLoggedIn = true;
-      req.session.buyerType = "buyer";
-      req.session.buyeremail = email;
-      res.redirect("/buyer_dashboard");
+      localStorage.setItem('buyeremial',email );
+      res.redirect("/card_data");
     } else {
       res.redirect("/buyer_login?error=Invalid%20Eamil%20or%20Password");
     }
@@ -213,13 +203,11 @@ app.post("/seller_login", async (req, res) => {
       { email, password }
     );
     if (result.rows.length > 0) {
-      req.session.issellerLoggedIn = true;
-      req.session.sellerType = "seller";
       req.session.seller_email = email;
-      console.log(req.session.seller_email);
+      localStorage.setItem('selleremial',email );
       res.redirect("/seller_view");
     } else {
-      res.status(401).send("Invalid credentials");
+      res.redirect("/seller_login?error=Invalid%20Eamil%20or%20Password");
     }
     await connection.close();
   } catch (err) {
@@ -234,7 +222,7 @@ app.post("/add_crop", async (req, res) => {
     name: req.body.cropname,
     price: req.body.price,
     quantity: req.body.quantity,
-    seller_email: req.session.seller_email,
+    seller_email: localStorage.getItem('selleremial'),
   };
 
   const connection = await connectToDatabase();
@@ -323,27 +311,30 @@ app.post("/clearbuyersession", (req, res) => {
 });
 
 function requireAdmin(req, res, next) {
-  if (req.session.isAdminLoggedIn && req.session.adminType === "admin") {
-    next();
-  } else {
+  const value = localStorage.getItem('adminemial');
+  if (value === null) {
     res.redirect("/adminlogin");
-  }
+} else {
+  next();
+}
 }
 
 function requireseller(req, res, next) {
-  if (req.session.issellerLoggedIn && req.session.sellerType === "seller") {
-    next();
-  } else {
+  const value = localStorage.getItem('selleremial');
+  if (value === null) {
     res.redirect("/seller_login");
-  }
+} else {
+  next();
+}
 }
 
 function requirebuyer(req, res, next) {
-  if (req.session.isbuyerLoggedIn && req.session.buyerType === "buyer") {
-    next();
-  } else {
+  const value = localStorage.getItem('buyeremial');
+  if (value === null) {
     res.redirect("/buyer_login");
-  }
+} else {
+  next();
+}
 }
 
 function convertJsonStructure(jsonData) {
@@ -361,18 +352,16 @@ function convertJsonStructure(jsonData) {
 app.get("/fruit_detail/page", requirebuyer, async (req, resp) => {
   const connection = await connectToDatabase();
   const result = await connection.execute(
-    "SELECT CROPID, NAME, CATEGORY, PRICE, QUANTITY, SELLER_EMAIL FROM cropdata WHERE CATEGORY = 'Fruits'"
+    `SELECT CROPID, NAME, CATEGORY, PRICE, QUANTITY, SELLER_EMAIL FROM cropdata WHERE CATEGORY = 'Fruits' and QUANTITY!='${0}'`
   );
   const result2 = convertJsonStructure(result.rows);
   resp.send(result2);
 });
 
-
-
 app.get("/vegitable_detail/page", requirebuyer, async (req, resp) => {
   const connection = await connectToDatabase();
   const result = await connection.execute(
-    "SELECT CROPID, NAME, CATEGORY, PRICE, QUANTITY, SELLER_EMAIL FROM cropdata WHERE CATEGORY = 'Vegetables'"
+    `SELECT CROPID, NAME, CATEGORY, PRICE, QUANTITY, SELLER_EMAIL FROM cropdata WHERE CATEGORY = 'Vegetables' and QUANTITY!='${0}'`
   );
   const result2 = convertJsonStructure(result.rows);
   resp.send(result2);
@@ -381,7 +370,7 @@ app.get("/vegitable_detail/page", requirebuyer, async (req, resp) => {
 app.get("/grains_detail/page", requirebuyer, async (req, resp) => {
   const connection = await connectToDatabase();
   const result = await connection.execute(
-    "SELECT CROPID, NAME, CATEGORY, PRICE, QUANTITY, SELLER_EMAIL FROM cropdata WHERE CATEGORY = 'Grains'"
+    `SELECT CROPID, NAME, CATEGORY, PRICE, QUANTITY, SELLER_EMAIL FROM cropdata WHERE CATEGORY = 'Grains' and QUANTITY!='${0}'`
   );
   console.log(result);
   const result2 = convertJsonStructure(result.rows);
@@ -514,13 +503,29 @@ app.get("/addcard", (req, res) => {
   }
 });
 
+function ensureArrayFormat(result) {
+  const metaData = result.metaData;
+  const rows = result.rows;
+  if (rows.length > 0 && typeof rows[0] === 'object' && !Array.isArray(rows[0])) {
+    const convertedRows = rows.map(row => {
+      return metaData.map(meta => row[meta.name]);
+    });
+    return {
+      metaData: metaData,
+      rows: convertedRows
+    };
+  }
+  return result;
+}
+
 async function lessquantity(cropid, quan) {
   const connection = await connectToDatabase();
   try {
-    const result = await connection.execute(
+    let result = await connection.execute(
       `SELECT QUANTITY FROM cropdata WHERE CROPID = :cropid`,
       [cropid]
     );
+    result = ensureArrayFormat(result);
     const updatequantity = result.rows[0][0];
     const a = parseInt(updatequantity) - parseInt(quan);
     console.log(result);
@@ -545,12 +550,13 @@ async function lessquantity(cropid, quan) {
 async function lessquantity2(cropid, quan) {
   const connection = await connectToDatabase();
   try {
-    const result = await connection.execute(
+    let result = await connection.execute(
       `SELECT QUANTITY FROM cropdata WHERE CROPID = :cropid`,
       [cropid]
     );
-    const updatequantity = result.rows[0].QUANTITY;
-    const a = parseInt(updatequantity) - parseInt(quan);
+    result = ensureArrayFormat(result);
+    const updatequantity = result.rows[0][0];
+    const a = parseInt(updatequantity) + parseInt(quan);
     console.log(result);
     console.log(updatequantity);
     console.log("dakh la bhi");
@@ -564,7 +570,7 @@ async function lessquantity2(cropid, quan) {
     await connection.commit();
     // console.log(a);
   } catch (error) {
-    console.log("ham sa na ho paiga LESS QUANITY");
+    console.log("ham sa na ho paiga  QUANITY increase");
     console.log(error);
   } finally {
     await connection.close();
@@ -576,7 +582,7 @@ async function addcarditem(carditem) {
   const connection = await connectToDatabase();
   try {
     const result = await connection.execute(
-      "INSERT INTO craditems (EMAIL, BUYER_EMAIL, CROPID, QUANTITY, AMOUNT) VALUES (:selleremail, :buyeremial, :cropid, :quantity, :amount)",
+      "INSERT INTO craditems (EMAIL, BUYER_EMAIL, CROPID, QUANTITY, AMOUNT,STATUS) VALUES (:selleremail, :buyeremial, :cropid, :quantity, :amount, 'cards')",
       carditem
     );
     await connection.commit();
@@ -589,7 +595,7 @@ async function addcarditem(carditem) {
 app.post("/cadsdata", (req, res) => {
   const requestData = req.body;
   console.log("Received data:", requestData);
-  const buyeremail = req.session.buyeremail;
+  const buyeremail = localStorage.getItem('buyeremial');
   const carditem = {
     cropid: requestData.cropid,
     selleremail: requestData.selleremail,
@@ -609,20 +615,64 @@ app.post("/cadsdata", (req, res) => {
     );
 });
 
-async function getdataofcard(buyeremial) {
-  oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
-  const connection = await connectToDatabase();
-  const result = await connection.execute(` SELECT ci.cropid, cd.NAME AS cropname, ci.quantity, ci.amount, ci.crad_id, ci.email, sd.NAME AS seller_name
-FROM craditems ci JOIN cropdata cd ON ci.cropid = cd.cropid JOIN seller_data sd ON cd.seller_email = sd.email
-WHERE ci.buyer_email = '${buyeremial}'`);
-return result.rows;
+async function getdataofbuybuyer(buyeremail) {
+  try {
+      oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
+      const connection = await connectToDatabase();
+      const result = await connection.execute(`
+          SELECT ci.cropid, cd.NAME AS cropname, ci.quantity, ci.amount, ci.crad_id, ci.email, sd.NAME AS seller_name , sd.city AS seller_city, sd.PHONE_NO as seller_no
+          FROM craditems ci 
+          JOIN cropdata cd ON ci.cropid = cd.cropid 
+          JOIN seller_data sd ON cd.seller_email = sd.email
+          WHERE ci.buyer_email = '${buyeremail}' and ci. STATUS = 'SOLD'`);
+      return result.rows;
+  } catch (error) {
+      console.error('Error executing query:', error);
+      throw error;
+  }
 }
-app.get('/buyer_card_table',async (req,resp)=>{
-  const buyeremail = req.session.buyeremail;
-  const  results = await  getdataofcard(buyeremail);
-  resp.json(results);
-});
 
+async function getdataoforderbuyer(buyeremail) {
+  try {
+      oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
+      const connection = await connectToDatabase();
+      const result = await connection.execute(`
+          SELECT ci.cropid, cd.NAME AS cropname, ci.quantity, ci.amount, ci.crad_id, ci.email, sd.NAME AS seller_name , sd.city AS seller_city, sd.PHONE_NO as seller_no 
+          FROM craditems ci 
+          JOIN cropdata cd ON ci.cropid = cd.cropid 
+          JOIN seller_data sd ON cd.seller_email = sd.email
+          WHERE ci.buyer_email = '${buyeremail}' and ci. STATUS = 'ORDER'`);
+      return result.rows;
+  } catch (error) {
+      console.error('Error executing query:', error);
+      throw error;
+  }
+}
+async function getdataofcardbuyer(buyeremail) {
+  try {
+      oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
+      const connection = await connectToDatabase();
+      const result = await connection.execute(`
+      SELECT ci.cropid, cd.NAME AS cropname, ci.quantity, ci.amount, ci.crad_id, ci.email, sd.NAME AS seller_name, sd.city AS seller_city
+      FROM craditems ci 
+      JOIN cropdata cd ON ci.cropid = cd.cropid 
+      JOIN seller_data sd ON cd.seller_email = sd.email
+      WHERE ci.buyer_email = '${buyeremail}' AND ci.STATUS = 'cards'`);
+      return result.rows;
+  } catch (error) {
+      console.error('Error executing query:', error);
+      throw error;
+  }
+}
+
+app.get('/buyer_card_table',async (req,resp)=>{
+  const buyeremail = localStorage.getItem('buyeremial');
+  const  resultcard = await  getdataofcardbuyer(buyeremail);
+  const resultsorder = await getdataoforderbuyer(buyeremail);
+  const resultbuy = await getdataofbuybuyer(buyeremail);
+  let buyerdashboardata = {'cards':resultcard,'orders':resultsorder,'bought':resultbuy};
+  resp.json(buyerdashboardata);
+});
 
 async function deletecard(cardid) {
   const connection = await connectToDatabase();
@@ -649,8 +699,238 @@ app.post('/buyer_card_table', async (req, resp) => {
   }
 });
 
+async function cardtoorderAPI(req) {
+  const buyeremail = localStorage.getItem('buyeremial');
+  const connection = await connectToDatabase();
+  await connection.execute(
+    `UPDATE CRADITEMS SET STATUS = 'ORDER' WHERE BUYER_EMAIL = :buyeremail`,
+    [buyeremail]
+  );
+  connection.commit();
+  console.log('Order status updated');
+}
+
+app.get('/confirmend_card', async (req, res) => {
+  try {
+    console.log('Received /confirmend_card request');
+    await cardtoorderAPI(req);
+    res.status(200).send('Order confirmed');
+  } catch (error) {
+    console.error('Error confirming order:', error);
+    res.status(500).send('Error confirming order');
+  }
+});
+
+async function getCropOfSeller() {
+  const sellerEmail = localStorage.getItem('selleremial'); // Ensure correct key
+  try {
+    oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
+    const connection = await connectToDatabase();
+    const result = await connection.execute(
+      `SELECT CROPID, NAME, CATEGORY, PRICE, QUANTITY, SELLER_EMAIL
+       FROM cropdata
+       WHERE SELLER_EMAIL = :sellerEmail AND QUANTITY != 0`,
+      { sellerEmail }  // Use bind variable for security
+    );
+
+    // Transforming result to match specified JSON structure
+    const cropdata = result.rows.map(row => ({
+      CROPID: row.CROPID,
+      NAME: row.NAME,
+      CATEGORY: row.CATEGORY,
+      PRICE: row.PRICE,
+      QUANTITY: row.QUANTITY,
+      SELLER_EMAIL: row.SELLER_EMAIL
+    }));
+
+    return { cropdata };
+  } catch (error) {
+    console.error('Error executing query:', error.message, error.stack);
+    throw new Error('Failed to fetch crop data for the seller.');
+  }
+}
+
+
+async function getOrderDataForSeller() {
+  const sellerEmail = localStorage.getItem('selleremial'); // Assuming 'selleremail' is correct spelling
+  try {
+    oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
+    const connection = await connectToDatabase();
+    const result = await connection.execute(
+      `SELECT ci.crad_id AS CRAD_ID, cd.NAME AS CROPNAME, ci.quantity AS QUANTITY, cd.CROPID AS CROPID,
+              ci.amount AS AMOUNT, bd.NAME AS BUYER_NAME, bd.PHONE_NO AS BUYER_PHONE_NO, 
+              bd.city AS BUYER_CITY, ci.buyer_email AS BUYER_EMAIL, ci.STATUS AS CONFIRMED
+       FROM craditems ci
+       JOIN cropdata cd ON ci.cropid = cd.cropid
+       JOIN seller_data sd ON cd.seller_email = sd.email
+       JOIN buyerdata bd ON ci.buyer_email = bd.BUYER_EMAIL
+       WHERE sd.email = :sellerEmail AND ci.STATUS = 'ORDER'`,
+      { sellerEmail }  // Bind variable
+    );
+
+    // Transforming result to match specified JSON structure
+    const orderdata = result.rows.map(row => ({
+      CROPNAME: row.CROPNAME,
+      QUANTITY: row.QUANTITY,
+      CROPID :row.CROPID,
+      AMOUNT: row.AMOUNT,
+      BUYER_NAME: row.BUYER_NAME,
+      BUYER_PHONE_NO: row.BUYER_PHONE_NO,
+      BUYER_CITY: row.BUYER_CITY,
+      BUYER_EMAIL: row.BUYER_EMAIL,
+      CONFIRMED: row.CONFIRMED,
+      CRAD_ID: row.CRAD_ID // Adding CRAD_ID to match the structure
+    }));
+
+    return { orderdata };
+  } catch (error) {
+    console.error('Error executing query:', error.message, error.stack);
+    throw new Error('Failed to fetch order data for the seller.');
+  } 
+}
+
+async function getSoldDataForSeller() {
+  const sellerEmail = localStorage.getItem('selleremial'); // Ensure correct key
+  try {
+    oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
+    const connection = await connectToDatabase();
+    const result = await connection.execute(
+      `SELECT ci.crad_id AS CRAD_ID, cd.NAME AS CROPNAME, ci.quantity AS QUANTITY, 
+              ci.amount AS AMOUNT, bd.NAME AS BUYER_NAME, bd.PHONE_NO AS BUYER_PHONE_NO, 
+              bd.city AS BUYER_CITY, ci.buyer_email AS BUYER_EMAIL, ci.STATUS AS CONFIRMED
+       FROM craditems ci
+       JOIN cropdata cd ON ci.cropid = cd.cropid
+       JOIN seller_data sd ON cd.seller_email = sd.email
+       JOIN buyerdata bd ON ci.buyer_email = bd.BUYER_EMAIL
+       WHERE sd.email = :sellerEmail AND ci.STATUS = 'SOLD'`,
+      { sellerEmail }  // Use bind variable for security
+    );
+
+    // Transforming result to match specified JSON structure
+    const orderdata = result.rows.map(row => ({
+      CRAD_ID: row.CRAD_ID,
+      CROPNAME: row.CROPNAME,
+      QUANTITY: row.QUANTITY,
+      AMOUNT: row.AMOUNT,
+      BUYER_NAME: row.BUYER_NAME,
+      BUYER_PHONE_NO: row.BUYER_PHONE_NO,
+      BUYER_CITY: row.BUYER_CITY,
+      BUYER_EMAIL: row.BUYER_EMAIL,
+      CONFIRMED: row.CONFIRMED
+    }));
+
+    return { orderdata };
+  } catch (error) {
+    console.error('Error executing query:', error.message, error.stack);
+    throw new Error('Failed to fetch sold order data for the seller.');
+  } 
+}
+
+
+app.get('/seller_dasbaord_data',requireseller,async (req,resp)=>{
+  const cropdata = await getCropOfSeller();
+  const orderdata = await getOrderDataForSeller();
+  const solddata = await getSoldDataForSeller();
+  const seller_dash = {'cropdata':cropdata,'orderdata':orderdata,'solddata':solddata};
+  resp.json(seller_dash);
+})
+
+
+
+async function ordertosold(cardid) {
+  const connection = await connectToDatabase();
+  await connection.execute(
+      `UPDATE CRADITEMS SET STATUS = 'SOLD' WHERE CRAD_ID = :cardid`,
+      [cardid]
+  );
+  await connection.commit();
+  console.log('Order status updated');
+}
+
+app.post('/confirmend_order', async (req, res) => {
+  const { cradId } = req.body;
+  if (!cradId) {
+      return res.status(400).send('CRAD_ID is required');
+  }
+
+  try {
+      await ordertosold(cradId);
+      res.status(200).send('Order confirmed');
+  } catch (error) {
+      console.error('Error confirming order:', error);
+      res.status(500).send('Error confirming order');
+  }
+});
+
+
+
+app.post('/cancel_order', async (req, res) => {
+  const data = req.body;
+  try {
+      await lessquantity2(data.cropId, data.quantity);
+      await deletecard(data.cradId);
+      console.log('Received cancel order request:', data);
+      res.status(200).json({ message: 'Order canceled successfully' });
+  } catch (error) {
+      console.error('Error processing cancel order request:', error);
+      res.status(500).json({ message: 'Failed to cancel order' });
+  }
+});
+
+async function deletecrop(cardid) {
+try {
+  const connection = await connectToDatabase();
+  await connection.execute(
+      `UPDATE cropdata SET QUANTITY = '${0}' WHERE CROPID = :cardid`,
+      [cardid]
+  );
+  await connection.commit();
+  console.log('crop delete succfully');
+} catch (error) {
+  console.log('error of delete crop')
+  console.log(error);
+}
+}
+
+app.post('/delete_crop', async (req,resp)=>{
+  const { cropId } = req.body;
+  console.log('Received crop ID to delete:', cropId);
+  await deletecrop(cropId);
+  resp.status(200).json({ message: 'Crop deleted successfully' });
+});
+
+async function editcrop(cropid,quantity,price) {
+  try {
+    const connection = await connectToDatabase();
+    await connection.execute(
+        `UPDATE cropdata SET QUANTITY =:quantity, PRICE = :price WHERE CROPID = :cropid`,
+        {cropid,quantity,price}
+    );
+    await connection.commit();
+    console.log('crop delete succfully');
+  } catch (error) {
+    console.log('error of edit data crop')
+    console.log(error);
+  }
+  }
+  
+  app.post('/edit_crop', async (req,resp)=>{
+    console.log(req.body);
+    const eidtdata = {'cropid':req.body.cropId,
+                      'price':parseInt(req.body.price),
+                    'quantity':parseInt(req.body.quantity)};
+    await editcrop(eidtdata.cropid,eidtdata.price,eidtdata.quantity);
+    console.log('Received crop for eidt:');
+    console.log(eidtdata);
+    resp.status(200).json({ message: 'Crop Edit successfully' });
+  });
+  
+  
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/", async (req, res) => {
+  localStorage.removeItem('adminemial');
+  localStorage.removeItem('buyeremial');
+  localStorage.removeItem('selleremial');
   res.sendFile(
     path.join(__dirname, "public", "HTML", "mainpages", "home.html")
   );
@@ -668,11 +948,13 @@ app.get("/contact", (req, res) => {
 
 //Sellingpages
 app.get("/seller_login", (req, res) => {
+  localStorage.removeItem('selleremial');
   res.sendFile(
     path.join(__dirname, "public", "HTML", "sellingpages", "seller_login.html")
   );
 });
 app.get("/seller_register", (req, res) => {
+  localStorage.removeItem('selleremial');
   res.sendFile(
     path.join(
       __dirname,
@@ -694,6 +976,13 @@ app.get("/seller_view", requireseller, (req, res) => {
   );
 });
 
+app.get("/seller_chatpage", requireseller, (req, res) => {
+  res.sendFile(
+    path.join(__dirname, "public", "HTML", "sellingpages", "chatapp.html")
+  );
+});
+
+
 //adminpages
 app.get("/adminlogin", (req, res) => {
   res.sendFile(
@@ -708,36 +997,38 @@ app.get("/admin_dashboard", requireAdmin, (req, res) => {
 
 //Buyingpages
 app.get("/buyer_register", (req, res) => {
+  localStorage.removeItem('buyeremial');
   res.sendFile(
     path.join(__dirname, "public", "HTML", "buyingpages", "buyer_register.html")
   );
 });
 app.get("/buyer_login", (req, res) => {
+  localStorage.removeItem('buyeremial');
   res.sendFile(
     path.join(__dirname, "public", "HTML", "buyingpages", "buyer_login.html")
   );
 });
-app.get("/crop_detail", (req, res) => {
+app.get("/crop_detail",requirebuyer, (req, res) => {
   res.sendFile(
     path.join(__dirname, "public", "HTML", "buyingpages", "crop_category.html")
   );
 });
-app.get("/fruit_detail", (req, res) => {
+app.get("/fruit_detail",requirebuyer, (req, res) => {
   res.sendFile(
     path.join(__dirname, "public", "HTML", "buyingpages", "fruit.html")
   );
 });
-app.get("/vegetable_detail", (req, res) => {
+app.get("/vegetable_detail", requirebuyer,(req, res) => {
   res.sendFile(
     path.join(__dirname, "public", "HTML", "buyingpages", "vegetable.html")
   );
 });
-app.get("/grain_detail", (req, res) => {
+app.get("/grain_detail",requirebuyer, (req, res) => {
   res.sendFile(
     path.join(__dirname, "public", "HTML", "buyingpages", "grain.html")
   );
 });
-app.get("/buyer_dashboard", (req, res) => {
+app.get("/buyer_dashboard",requirebuyer, (req, res) => {
   res.sendFile(
     path.join(
       __dirname,
@@ -749,7 +1040,7 @@ app.get("/buyer_dashboard", (req, res) => {
   );
 });
 
-app.get("/crop_data_according_to_person", (req, res) => {
+app.get("/crop_data_according_to_person",requirebuyer, (req, res) => {
   const { cropname, category, cropimage } = req.query;
   req.session.cropimage = cropimage;
   console.log("ankh khol kar dakh la");
@@ -765,12 +1056,12 @@ app.get("/crop_data_according_to_person", (req, res) => {
   );
 });
 
-app.get("/test", (req, res) => {
+app.get("/test",requirebuyer, (req, res) => {
   res.sendFile(
     path.join(__dirname, "public", "HTML", "buyingpages", "detail_crop.html")
   );
 });
-app.get("/card_data", (req, res) => {
+app.get("/card_data",requirebuyer, (req, res) => {
   res.sendFile(
     path.join(__dirname, "public", "HTML", "buyingpages", "cards_data.html")
   );

@@ -1,21 +1,401 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Seller Dashboard</title>
     <link rel="stylesheet" href="/CSS/sellingpages/seller_view.css">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <script src="/JS/sellingpages/seller_view.js" defer></script>
+    <style>
+        body {
+            background-color: #f9f9f9;
+        }
+
+        .containersbuyer {
+            display: flex;
+            height: 85vh;
+        }
+
+        .sidebar {
+            width: 230px;
+            background-color: #343a40;
+            color: white;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            margin-left: -15px;
+            border-top-right-radius: 10px;
+            margin-top: -88px;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar .btn {
+            margin-bottom: 10px;
+            width: 100%;
+            background-color: transparent;
+            color: white;
+            border: none;
+            text-align: left;
+            padding: 10px 15px;
+        }
+
+        .sidebar .btn:hover {
+            background-color: #495057;
+        }
+
+        .cardtable {
+            flex-grow: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .table thead th {
+            background-color: #ffbf92;
+            color: rgb(0, 0, 0);
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+
+        .table tbody tr:nth-child(even) {
+            background-color: #ffe2bb;
+        }
+
+        .table tbody tr:nth-child(odd) {
+            background-color: #fff3dd;
+        }
+
+        .total-amount {
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        .confirm-btn {
+            align-self: flex-end;
+            margin-top: 20px;
+        }
+        .wide-button {
+            width: 100px; /* Adjust this value to your desired width */
+        }
+    </style>
 </head>
+
 <body>
-    <h2>Seller Dash board</h2>
-    <br>
-    <h5>Crop detail</h5>
-    <br>
-    <p>edit and delete crop all from the view data list</p>
-    <br>
-    <a href="/add_crop"><button>Add crop</button></a>
-    <br>
-    <a href="/"><button>back to home</button></a>
+    <div class="container-fluid">
+        <h2 class="mt-4 mb-4" style="text-align: center; color:rgb(0, 142, 0);">Seller Dashboard</h2>
+        <div class="containersbuyer">
+            <div class="sidebar">
+                <button class="btn" id="startselling">Add Crops</button>
+                <button class="btn btn-success" id="showCropsBtn">Show Crops</button>
+                <button class="btn" id="showOrderCropsBtn">Show Order Crops</button>
+                <button class="btn" id="showSoldCropsBtn">Show Sold Crops</button>
+                <button class="btn" id="sellerchat">Seller Chat</button>
+                <button class="btn" id="logout">Log Out</button>
+            </div>
+            <div class="cardtable">
+                <table class="table table-striped" id="sellerDashboardTable" style="display: none;">
+                    <thead>
+                        <tr id="tableHeader">
+                        </tr>
+                    </thead>
+                    <tbody id="sellerDashboardTableBody">
+                    </tbody>
+                </table>
+                <div class="total-amount" id="totalAmount" style="display: none;">Total Amount: $0</div>
+                <button class="btn btn-success confirm-btn" id="confirmBtn" style="display: none;">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchData(endpoint) {
+            try {
+                const response = await fetch(`/seller_dasbaord_data?data=${endpoint}`);
+                const data = await response.json();
+                console.log(`Fetched data for ${endpoint}:`, data);
+                return data;
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                return null;
+            }
+        }
+
+        function createTableHeader(dataType) {
+            const tableHeader = document.getElementById('tableHeader');
+            tableHeader.innerHTML = '';
+            let headers = [];
+            if (dataType === 'Crop') {
+                headers = ['Crop Id', 'Name', 'Category', 'Price', 'Quantity',  'Edit Price','Edit Quantity', 'Edit', 'Delete'];
+            } else if (dataType === 'order') {
+                headers = ['Crop Name', 'Quantity', 'Amount', 'Buyer Name', 'Buyer Phone No', 'Buyer City', 'Buyer Email', 'Confirmed', 'Cancel'];
+            } else if (dataType === 'sold') {
+                headers = ['Crop Name', 'Quantity', 'Amount', 'Buyer Name', 'Buyer Phone No', 'Buyer City', 'Buyer Email'];
+            }
+            headers.forEach(headerText => {
+                const th = document.createElement('th');
+                th.textContent = headerText;
+                tableHeader.appendChild(th);
+            });
+        }
+
+        async function displayData(dataType) {
+            createTableHeader(dataType);
+            const sellerDashboardTableBody = document.getElementById('sellerDashboardTableBody');
+            sellerDashboardTableBody.innerHTML = '';
+
+            const data = await fetchData(dataType);
+            if (!data) return;
+
+            console.log(`Data type: ${dataType}`, data);
+
+            if (dataType === 'Crop') {
+                if (Array.isArray(data.cropdata.cropdata)) {
+                    data.cropdata.cropdata.forEach(row => {
+                        const tableRow = document.createElement('tr');
+                        addCell(tableRow, row.CROPID);
+                        addCell(tableRow, row.NAME);
+                        addCell(tableRow, row.CATEGORY);
+                        addCell(tableRow, row.PRICE);
+                        addCell(tableRow, row.QUANTITY);
+                        addInputCell(tableRow, 'quantityInput' + row.CROPID);
+                        addInputCell(tableRow, 'priceInput' + row.CROPID);
+                        
+                        addButtonCell(tableRow, 'Edit', 'btn btn-warning btn-sm', row.CROPID, confirmCrop);
+                        addButtonCell(tableRow, 'Delete', 'btn btn-danger btn-sm', row.CROPID, deleteCrop);
+                        sellerDashboardTableBody.appendChild(tableRow);
+                    });
+                } else {
+                    console.error('cropdata.cropdata is not an array:', data.cropdata);
+                }
+                document.getElementById('totalAmount').style.display = 'none';
+                document.getElementById('confirmBtn').style.display = 'none';
+            } else if (dataType === 'order') {
+                let totalAmount = 0;
+                if (Array.isArray(data.orderdata.orderdata)) {
+                    data.orderdata.orderdata.forEach(row => {
+                        const tableRow = document.createElement('tr');
+                        addCell(tableRow, row.CROPNAME);
+                        addCell(tableRow, row.QUANTITY);
+                        addCell(tableRow, row.AMOUNT);
+                        totalAmount += parseFloat(row.AMOUNT);
+                        addCell(tableRow, row.BUYER_NAME);
+                        addCell(tableRow, row.BUYER_PHONE_NO);
+                        addCell(tableRow, row.BUYER_CITY || 'N/A');
+                        addCell(tableRow, row.BUYER_EMAIL);
+                        addButtonCell(tableRow, row.CONFIRMED, 'btn btn-success btn-sm', row.CRAD_ID, confirmOrder);
+                        addButtonCell(tableRow, 'Cancel', 'btn btn-danger btn-sm', row.CRAD_ID, cancelOrder, row.QUANTITY, row.CROPID);
+                        sellerDashboardTableBody.appendChild(tableRow);
+                    });
+                    updateTotalAmount(totalAmount);
+                    document.getElementById('totalAmount').style.display = 'block';
+                    document.getElementById('confirmBtn').style.display = 'none';
+                } else {
+                    console.error('orderdata.orderdata is not an array:', data.orderdata);
+                }
+            } else if (dataType === 'sold') {
+                if (Array.isArray(data.solddata.orderdata)) {
+                    data.solddata.orderdata.forEach(row => {
+                        const tableRow = document.createElement('tr');
+                        addCell(tableRow, row.CROPNAME);
+                        addCell(tableRow, row.QUANTITY);
+                        addCell(tableRow, row.AMOUNT);
+                        addCell(tableRow, row.BUYER_NAME);
+                        addCell(tableRow, row.BUYER_PHONE_NO);
+                        addCell(tableRow, row.BUYER_CITY || 'N/A');
+                        addCell(tableRow, row.BUYER_EMAIL);
+                        sellerDashboardTableBody.appendChild(tableRow);
+                    });
+                } else {
+                    console.error('solddata.orderdata is not an array:', data.solddata);
+                }
+                document.getElementById('totalAmount').style.display = 'none';
+                document.getElementById('confirmBtn').style.display = 'none';
+            }
+        }
+
+        function addCell(row, text) {
+            const cell = document.createElement('td');
+            cell.textContent = text;
+            row.appendChild(cell);
+        }
+
+        function addInputCell(row, id) {
+            const cell = document.createElement('td');
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'form-control';
+            input.id = id;
+            cell.appendChild(input);
+            row.appendChild(cell);
+        }
+
+        function addButtonCell(row, text, className, id, onClick, quantity = null, cropId = null) {
+            const cell = document.createElement('td');
+            const button = document.createElement('button');
+            button.textContent = text;
+            button.className = `${className} wide-button`; // Add the wide-button class
+            button.dataset.id = id;
+            if (quantity !== null) {
+                button.dataset.quantity = quantity;
+            }
+            if (cropId !== null) {
+                button.dataset.cropId = cropId;
+            }
+            button.onclick = () => onClick(id, quantity, cropId);
+            cell.appendChild(button);
+            row.appendChild(cell);
+        }
+        
+        async function editCrop(cropId, price, quantity) {
+            try {
+                const response = await fetch('/edit_crop', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ cropId, price, quantity })
+                });
+                console.log(cropId, price, quantity);
+                if (response.ok) {
+                    const responseData = await response.json();
+                    alert(responseData.message); // Show the success message from the backend
+                    displayData('Crop');
+                } else {
+                    const errorData = await response.json();
+                    alert(errorData.message); // Show the error message from the backend
+                }
+            } catch (error) {
+                console.error('Error editing crop:', error);
+                alert('Error editing crop.');
+            }
+        }
+
+        async function deleteCrop(cropId) {
+            try {
+                const response = await fetch('/delete_crop', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ cropId })
+                });
+
+                if (response.ok) {
+                    const responseData = await response.json();
+                    alert(responseData.message);
+                    displayData('Crop');
+                } else {
+                    const errorData = await response.json();
+                    alert(errorData.message);
+                }
+            } catch (error) {
+                console.error('Error deleting crop:', error);
+                alert('Error deleting crop.');
+            }
+        }
+
+        async function confirmOrder(cradId) {
+            try {
+                const response = await fetch('/confirmend_order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ cradId })
+                });
+
+                if (response.ok) {
+                    alert('Order confirmed successfully!');
+                    displayData('order');
+                } else {
+                    alert('Failed to confirm order.');
+                }
+            } catch (error) {
+                console.error('Error confirming order:', error);
+                alert('Error confirming order.');
+            }
+        }
+
+        async function cancelOrder(cradId, quantity, cropId) {
+            try {
+                const response = await fetch('/cancel_order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ cradId, quantity, cropId })
+                });
+
+                if (response.ok) {
+                    const responseData = await response.json();
+                    alert(responseData.message); // Show the success message from the backend
+                    displayData('order');
+                } else {
+                    const errorData = await response.json();
+                    alert(errorData.message); // Show the error message from the backend
+                }
+            } catch (error) {
+                console.error('Error canceling order:', error);
+                alert('Error canceling order.');
+            }
+        }
+
+        function confirmCrop(cropId) {
+            const priceInput = document.getElementById('priceInput' + cropId).value;
+            const quantityInput = document.getElementById('quantityInput' + cropId).value;
+            editCrop(cropId, priceInput, quantityInput); // Call the editCrop function with the retrieved values
+        }
+
+        function updateTotalAmount(totalAmount) {
+            const totalAmountElement = document.getElementById('totalAmount');
+            totalAmountElement.textContent = `Total Amount: $${totalAmount.toFixed(2)}`;
+        }
+
+        document.getElementById('startselling').onclick = function () {
+            window.location.href = 'add_crop';
+        };
+        document.getElementById('sellerchat').onclick = function () {
+            window.location.href = 'seller_chatpage';
+        };
+        
+
+        document.getElementById('showCropsBtn').onclick = function () {
+            const table = document.getElementById('sellerDashboardTable');
+            table.style.display = 'table';
+            displayData('Crop');
+        };
+
+        document.getElementById('showOrderCropsBtn').onclick = function () {
+            const table = document.getElementById('sellerDashboardTable');
+            table.style.display = 'table';
+            displayData('order');
+        };
+
+        document.getElementById('showSoldCropsBtn').onclick = function () {
+            const table = document.getElementById('sellerDashboardTable');
+            table.style.display = 'table';
+            displayData('sold');
+        };
+
+        document.getElementById('logout').onclick = function () {
+            // Logic to log out
+        };
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
+
 </html>
