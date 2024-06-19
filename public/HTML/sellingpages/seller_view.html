@@ -269,7 +269,7 @@
                 console.log(cropId, price, quantity);
                 if (response.ok) {
                     const responseData = await response.json();
-                    alert(responseData.message); // Show the success message from the backend
+            
                     displayData('Crop');
                 } else {
                     const errorData = await response.json();

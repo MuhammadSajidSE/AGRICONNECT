@@ -7,6 +7,7 @@ const axios = require("axios");
 const bodyParser = require("body-parser");
 const { Console } = require("console");
 const { LocalStorage } = require('node-localstorage');
+const { connect } = require("http2");
 const localStorage = new LocalStorage('./scratch');
 const app = express(); // Initialize express before using it
 
@@ -926,11 +927,202 @@ async function editcrop(cropid,quantity,price) {
   });
   
   
+
+//chat Application backend code
+
+function isAlreadyConverted(array) {
+  if (!Array.isArray(array)) {
+    console.error('Input is not an array:', array);
+    return false;
+  }
+  return array.every(item => typeof item === 'object' && item.hasOwnProperty('email') && item.hasOwnProperty('name'));
+}
+
+// Function to convert the array if it's not in the desired format
+function convertbuyercontact(array) {
+  if (!Array.isArray(array)) {
+    console.error('Input is not an array:', array);
+    return [];
+  }
+
+  if (isAlreadyConverted(array)) {
+    return array;
+  }
+
+  return array.map(item => ({
+    email: item[0],
+    name: item[1]
+  }));
+}
+
+const convertOrReturnJson = (json) => {
+  // Check if JSON is already in the desired format
+  const isAlreadyConverted = json.every(item => typeof item === 'object' && 'email' in item && 'name' in item);
+  
+  if (isAlreadyConverted) {
+    return json;
+  } else {
+    // Convert JSON into desired format
+    const convertedJson = json.map(item => {
+      return {
+        email: item[0],
+        name: item[1]
+      };
+    });
+    return convertedJson;
+  }
+}
+
+async function getbuyercontact() {
+  const connection =await connectToDatabase();
+  const sellerEmail = localStorage.getItem('selleremial');
+  const result =  await connection.execute(
+    `select DISTINCT buyerdata.buyer_email,buyerdata.name from buyerdata, craditems where buyerdata.buyer_email = craditems.buyer_email and craditems.email = '${sellerEmail}'`,);
+  //   let formattedData = result.rows.map(row => ({
+  //   email: row[0],
+  //   name: row[1]
+  // }));
+  formattedData = convertOrReturnJson(result.rows);
+    return formattedData;
+}
+
+app.get('/buyer_contact', async (req, resp) => {
+  const data = await getbuyercontact();
+  resp.send(data);
+});
+
+
+app.post('/buyer_contact',async(req,resp)=>{
+  const buyer_email = req.body.buyerEmail;
+  console.log(buyer_email);
+  if (localStorage.getItem('curent_buyer_contact')) {
+    localStorage.removeItem('curent_buyer_contact');
+  }
+  localStorage.setItem('curent_buyer_contact', buyer_email);
+})
+
+async function getmessageseller() {
+  const connection = await connectToDatabase();
+  const sellerEmail = localStorage.getItem('selleremial');
+  const currentbuyerEmail = localStorage.getItem('curent_buyer_contact');
+  const result = await connection.execute(`SELECT MESSAGENO,MESSAGE,SENDEREMAIL,RECIEVEREMAIL
+FROM sendmessage 
+WHERE 
+    (SENDEREMAIL = '${currentbuyerEmail}' and RECIEVEREMAIL = '${sellerEmail}') or
+    (SENDEREMAIL = '${sellerEmail}' and RECIEVEREMAIL = '${currentbuyerEmail}')`);
+const messages = result.rows.map(row => ({
+  messageno: row[0],
+  message: row[1],
+  senderemail: row[2],
+  recieveremail: row[3]
+}));
+
+return messages;
+}
+
+
+async function sendmessageseller(message) {
+  const connection = await connectToDatabase();
+  const sellerEmail = localStorage.getItem('selleremial');
+  const currentbuyerEmail = localStorage.getItem('curent_buyer_contact');
+  const result = await connection.execute(`
+  INSERT INTO sendmessage (senderemail, recieveremail, message) 
+  VALUES ('${sellerEmail}', '${currentbuyerEmail}', '${message}')
+`);
+  await connection.commit();
+}
+
+app.post('/seller_chatpage_message', async (req, resp) => {
+  const message = req.body.message;
+  await sendmessageseller(message);
+});
+app.get('/seller_chatpage_message',async(req,resp)=>{
+  const result1 = await getmessageseller();
+  const sellerEmail = localStorage.getItem('selleremial');
+  const currentbuyerEmail = localStorage.getItem('curent_buyer_contact');
+  const sendpropermessage = {messagelist:result1,selleremail:sellerEmail,buyeremail:currentbuyerEmail};
+  resp.send(sendpropermessage);
+})
+
+
+
+//buyer chating code
+async function getsellercontact() {
+  const connection =await connectToDatabase();
+  const buyerEmail = localStorage.getItem('buyeremial');
+  let result =  await connection.execute(
+    `select DISTINCT seller_data.EMAIL,seller_data.NAME from seller_data, craditems where seller_data.EMAIL = craditems.EMAIL and craditems.BUYER_EMAIL = '${buyerEmail}'`,);
+  //   let formattedData = result.rows.map(row => ({
+  //   email: row[0],
+  //   name: row[1]
+  // }));
+  formattedData = convertOrReturnJson(result.rows)
+    return formattedData;
+}
+app.get('/seller_contact', async (req, resp) => {
+  const data = await getsellercontact();
+  resp.send(data);
+});
+
+
+app.post('/seller_contact',async(req,resp)=>{
+  const buyer_email = req.body.buyerEmail;
+  console.log(buyer_email);
+  if (localStorage.getItem('curent_seller_contact')) {
+    localStorage.removeItem('curent_seller_contact');
+  }
+  localStorage.setItem('curent_seller_contact', buyer_email);
+})
+
+
+async function getmessagebuyer() {
+  const connection = await connectToDatabase();
+  const buyerEmail = localStorage.getItem('buyeremial');
+  const currentsellerEmail = localStorage.getItem('curent_seller_contact');
+  const result = await connection.execute(`
+  SELECT MESSAGENO,MESSAGE,SENDEREMAIL,RECIEVEREMAIL
+  FROM sendmessage 
+  WHERE 
+      (SENDEREMAIL = '${currentsellerEmail}' and RECIEVEREMAIL = '${buyerEmail}') or
+      (SENDEREMAIL = '${buyerEmail}' and RECIEVEREMAIL = '${currentsellerEmail}')
+`);
+const messages = result.rows.map(row => ({
+  messageno: row[0],
+  message: row[1],
+  senderemail: row[2],
+  recieveremail: row[3]
+}));
+return messages;
+}
+
+async function sendmessagebuyer(message) {
+  const connection = await connectToDatabase();
+  const buyerEmail = localStorage.getItem('buyeremial');
+  const currentsellerEmail = localStorage.getItem('curent_seller_contact');
+  const result = await connection.execute(`
+  INSERT INTO sendmessage (senderemail, recieveremail, message) 
+  VALUES ('${buyerEmail}', '${currentsellerEmail}', '${message}')
+`);
+  await connection.commit();
+}
+
+
+
+app.post('/buyer_chatpage_message', async (req, resp) => {
+  const message = req.body.message;
+  await sendmessagebuyer(message);
+});
+app.get('/buyer_chatpage_message',async(req,resp)=>{
+  const result1 = await getmessagebuyer();
+  const buyerEmail = localStorage.getItem('buyeremial');
+  const currentsellerEmail = localStorage.getItem('curent_seller_contact');
+  const sendpropermessage = {messagelist:result1,selleremail:currentsellerEmail,buyeremail:buyerEmail};
+  resp.send(sendpropermessage);
+})
+
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/", async (req, res) => {
-  localStorage.removeItem('adminemial');
-  localStorage.removeItem('buyeremial');
-  localStorage.removeItem('selleremial');
+
   res.sendFile(
     path.join(__dirname, "public", "HTML", "mainpages", "home.html")
   );
@@ -978,13 +1170,14 @@ app.get("/seller_view", requireseller, (req, res) => {
 
 app.get("/seller_chatpage", requireseller, (req, res) => {
   res.sendFile(
-    path.join(__dirname, "public", "HTML", "sellingpages", "chatapp.html")
+    path.join(__dirname, "public", "HTML", "sellingpages", "sellerchatapp.html")
   );
 });
 
 
 //adminpages
 app.get("/adminlogin", (req, res) => {
+  localStorage.removeItem('adminemial');
   res.sendFile(
     path.join(__dirname, "public", "HTML", "adminpages", "adminlogin.html")
   );
@@ -1066,7 +1259,11 @@ app.get("/card_data",requirebuyer, (req, res) => {
     path.join(__dirname, "public", "HTML", "buyingpages", "cards_data.html")
   );
 });
-
+app.get("/buyer_chat",requirebuyer, (req, res) => {
+  res.sendFile(
+    path.join(__dirname, "public", "HTML", "buyingpages", "buyer_chat.html")
+  );
+});  
 const server = app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}/`);
 });

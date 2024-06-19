@@ -81,6 +81,7 @@
                 <button class="btn btn-success" id="showCardsBtn">Show Cards Crops</button>
                 <button class="btn" id="btn2">Show Order Crops</button>
                 <button class="btn" id="btn3">Show Bought Crops</button>
+                <button class="btn" id="buyerchat">Buyer Chat</button>
                 <button class="btn" id="logout">Log Out</button>
             </div>
             <div class="cardtable">
@@ -258,8 +259,12 @@
         document.getElementById('startshopping').onclick = function() {
             window.location.href = 'crop_detail';
         };
+        
         document.getElementById('logout').onclick = function() {
             window.location.href = 'buyer_register';
+        };
+        document.getElementById('buyerchat').onclick = function() {
+            window.location.href = 'buyer_chat';
         };
     </script>
 </body>
