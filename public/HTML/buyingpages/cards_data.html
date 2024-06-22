@@ -70,6 +70,38 @@
             align-self: flex-end;
             margin-top: 20px;
         }
+        .circle {
+            padding: 10px;
+            width: 170px;
+            height: 170px;
+            background-color: rgb(0, 156, 156);
+            border-radius: 50%;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-left: 10px; /* Reduced from 20px to 10px */
+        }
+        .circle-label {
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        
+        .circle-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .circle-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px; /* Adjust as needed */
+            margin-left: 100px;
+            margin-top: 100px;
+        }
     </style>
 </head>
 <body>
@@ -82,8 +114,10 @@
                 <button class="btn" id="btn2">Show Order Crops</button>
                 <button class="btn" id="btn3">Show Bought Crops</button>
                 <button class="btn" id="buyerchat">Buyer Chat</button>
+                <button class="btn" id="complain">Complain</button>
                 <button class="btn" id="logout">Log Out</button>
             </div>
+            <div id="circleSection" class="circle-container"></div>
             <div class="cardtable">
                 <table class="table table-striped" id="buyerCardTable" style="display: none;">
                     <thead>
@@ -112,8 +146,37 @@
             const data = await response.json();
             return data;
         }
-
+        document.addEventListener('DOMContentLoaded', async function () {
+            try {
+                const response = await fetch('/buyer_dashboard_first_page');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch data');
+                }
+                const data = await response.json();
+                console.log('Fetched initial data:', data);
+                const circleSection = document.getElementById('circleSection');
+                circleSection.innerHTML = '';
+                updateCircle('Total Cards Amount', data.totalcard);
+                updateCircle('Number of Seller', data.noseller);
+                updateCircle('Total Bought Amount', data.totalbought);
+                updateCircle('Total Order Amount', data.totalorderbuyer);
+            } catch (error) {
+                console.error('Error fetching initial data:', error);
+            }
+        }); 
+        function updateCircle(label, value) {
+            const circleSection = document.getElementById('circleSection');
+            const circle = document.createElement('div');
+            circle.classList.add('circle');
+            circle.innerHTML = `<div class="circle-label">${label}</div><div class="circle-value">${value}</div>`;
+            circleSection.appendChild(circle);
+        }
+        function toggleCircleVisibility() {
+            const circleSection = document.getElementById('circleSection');
+            circleSection.style.display = 'none';
+        }
         function createTableHeader(dataType) {
+            toggleCircleVisibility();
             const tableHeader = document.getElementById('tableHeader');
             tableHeader.innerHTML = '';
             const headers = ['Crop Name', 'Quantity', 'Amount', 'Seller Name', 'Seller Email', 'Seller City'];
@@ -205,12 +268,10 @@
 
                 buyerCardTableBody.appendChild(tableRow);
             });
-
             updateTotalAmount(totalAmount);
             document.getElementById('totalAmount').style.display = 'block';
             document.getElementById('confirmBtn').style.display = (dataType === 'cards') ? 'block' : 'none';
         }
-
         async function deleteRow(cardId, cropId, quantity) {
             const response = await fetch('/buyer_card_table', {
                 method: 'POST',
@@ -266,6 +327,10 @@
         document.getElementById('buyerchat').onclick = function() {
             window.location.href = 'buyer_chat';
         };
+        document.getElementById('complain').onclick = function () {
+            window.location.href = 'camplain_buyer';
+        };
     </script>
 </body>
 </html>
+
