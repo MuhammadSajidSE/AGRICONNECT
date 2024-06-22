@@ -1369,6 +1369,5 @@ app.get("/buyer_chat",requirebuyer, (req, res) => {
 });  
 const server = app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}/`);
+  console.log("sajid");
 });
-
-
