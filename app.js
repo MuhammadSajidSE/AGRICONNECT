@@ -7,10 +7,13 @@ const axios = require("axios");
 const bodyParser = require("body-parser");
 const { Console } = require("console");
 const { LocalStorage } = require('node-localstorage');
+const { connect } = require("http2");
 const localStorage = new LocalStorage('./scratch');
-const app = express(); // Initialize express before using it
-
+const app = express(); 
 const port = 3001;
+
+
+// ###################CONNECTIONS##############################
 
 app.use(bodyParser.json());
 app.use(express.json());
@@ -32,32 +35,11 @@ async function connectToDatabase() {
   return connection;
 }
 
-// async function checkEmailExists(email) {
-app.post("/buyer_register", async (req, res) => {
-  const buyer_register = {
-    name: req.body.name,
-    email: req.body.email,
-    password: req.body.password,
-    phone_no: req.body.phone_no,
-    buyer_address: req.body.address,
-    city: req.body.city, // Add the city field
-  };
+//########################################################################################
+//##############################Authentication FUNCTION###################################
 
-  try {
-    const emailExists = await checkEmailExistbuyer(buyer_register.email);
-    if (emailExists) {
-      res.redirect("/buyer_register?error=Email%20already%20exists");
-    } else {
-      await buyer_registers(buyer_register);
-      res.redirect("/buyer_login");
-    }
-  } catch (error) {
-    console.error("Error during buyer registration:", error); // Log the error
-    res.status(500).send("Internal Server Error");
-  }
-});
 
-// Function to check if email exists in the database
+//CHECK BUYER EMAIL IS ALREADY EXIST OR NOT
 async function checkEmailExistbuyer(email) {
   try {
     const connection = await connectToDatabase();
@@ -73,7 +55,7 @@ async function checkEmailExistbuyer(email) {
   }
 }
 
-// Function to register buyer
+//BUYER REGISTRATION FUNCTION
 async function buyer_registers(buyers_data) {
   try {
     const connection = await connectToDatabase();
@@ -90,6 +72,7 @@ async function buyer_registers(buyers_data) {
   }
 }
 
+//SELLER REGISTRATION FUNCTION
 async function seller_registers(seller_data) {
   try {
     const connection = await connectToDatabase();
@@ -99,13 +82,14 @@ async function seller_registers(seller_data) {
     );
     await connection.commit();
     await connection.close();
-    return result; // Return the result if needed
+    return result;
   } catch (error) {
     console.error("Error registering seller:", error);
-    throw error; // Rethrow the error for the caller to handle
+    throw error; 
   }
 }
 
+//CHECK SELLER EMAIL IS ALREADY EXIST OR NOT
 async function checkEmailExistsseller(email) {
   try {
     const connection = await connectToDatabase();
@@ -114,14 +98,71 @@ async function checkEmailExistsseller(email) {
       { email: email.toLowerCase() }
     );
     await connection.close();
-
-    // If any row is returned from the query, return true; otherwise, return false
     return result.rows.length > 0;
   } catch (error) {
     console.error("Error checking email existence:", error);
     throw error;
   }
 }
+
+//MIDDLEWAER ADMIN FUNCTION
+function requireAdmin(req, res, next) {
+  const value = localStorage.getItem('adminemial');
+  if (value === null) {
+    res.redirect("/adminlogin");
+} else {
+  next();
+}
+}
+
+//MIDDLEWEAR SELLLER FUNCTION
+function requireseller(req, res, next) {
+  const value = localStorage.getItem('selleremial');
+  if (value === null) {
+    res.redirect("/seller_login");
+} else {
+  next();
+}
+}
+
+//MIDDLEWEAR BUYER FUNCTION
+function requirebuyer(req, res, next) {
+  const value = localStorage.getItem('buyeremial');
+  if (value === null) {
+    res.redirect("/buyer_login");
+} else {
+  next();
+}
+}
+//########################################################################################
+//##############################Authentication API###################################
+
+//BUYER REGISTER POST API
+app.post("/buyer_register", async (req, res) => {
+  const buyer_register = {
+    name: req.body.name,
+    email: req.body.email,
+    password: req.body.password,
+    phone_no: req.body.phone_no,
+    buyer_address: req.body.address,
+    city: req.body.city,
+  };
+
+  try {
+    const emailExists = await checkEmailExistbuyer(buyer_register.email);
+    if (emailExists) {
+      res.redirect("/buyer_register?error=Email%20already%20exists");
+    } else {
+      await buyer_registers(buyer_register);
+      res.redirect("/buyer_login");
+    }
+  } catch (error) {
+    console.error("Error during buyer registration:", error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+//SELLLER REGISTER POST API
 app.post("/seller_register", async (req, res) => {
   const sell_register = {
     name: req.body.name,
@@ -129,7 +170,7 @@ app.post("/seller_register", async (req, res) => {
     password: req.body.password,
     phone_no: req.body.phone_no,
     seller_address: req.body.address,
-    city: req.body.city, // Add the city field
+    city: req.body.city, 
   };
   try {
     const emailExists = await checkEmailExistsseller(sell_register.email);
@@ -143,7 +184,8 @@ app.post("/seller_register", async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 });
-
+ 
+//ADMIN LOGIN POST API
 app.post("/adminlogin", async (req, res) => {
   const { email, password } = req.body;
   console.log("Received login request:", { email, password });
@@ -170,6 +212,7 @@ app.post("/adminlogin", async (req, res) => {
   }
 });
 
+//BUYER LOGIN POST API
 app.post("/buyer_login", async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -194,6 +237,7 @@ app.post("/buyer_login", async (req, res) => {
   }
 });
 
+//SELLER LOGIN POST API
 app.post("/seller_login", async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -216,6 +260,27 @@ app.post("/seller_login", async (req, res) => {
   }
 });
 
+//CLEAR LOCALSTORAGE API NOT USED BUT (RAHNA DO)
+app.post("/clearAdminSession", (req, res) => {
+  delete req.session.isAdminLoggedIn;
+  delete req.session.adminType;
+  res.sendStatus(200);
+});
+app.post("/clearsellersession", (req, res) => {
+  delete req.session.issellerLoggedIn;
+  delete req.session.sellerType;
+  res.sendStatus(200);
+});
+app.post("/clearbuyersession", (req, res) => {
+  delete req.session.isbuyerLoggedIn;
+  delete req.session.buyerType;
+  res.sendStatus(200);
+});
+
+
+//ADD CROP FUNCTION AND API
+//IF ALREADY SAME PRICE CROPS IS EXIST THEN INCREASE IT QUANTITY
+//OTHER WISE NEW CROPS IS ADDED
 app.post("/add_crop", async (req, res) => {
   const sell_register = {
     category: req.body.category,
@@ -224,9 +289,7 @@ app.post("/add_crop", async (req, res) => {
     quantity: req.body.quantity,
     seller_email: localStorage.getItem('selleremial'),
   };
-
   const connection = await connectToDatabase();
-
   const chekcrop = await connection.execute(
     `SELECT name FROM cropdata WHERE name = :name AND price = :price AND seller_email = :seller_email`,
     {
@@ -235,7 +298,6 @@ app.post("/add_crop", async (req, res) => {
       seller_email: sell_register.seller_email,
     }
   );
-
   if (chekcrop.rows.length === 0) {
     await connection.execute(
       `INSERT INTO cropdata (category, name, price, quantity, seller_email) 
@@ -248,9 +310,7 @@ app.post("/add_crop", async (req, res) => {
         seller_email: sell_register.seller_email,
       }
     );
-
     await connection.commit();
-
     notifier.notify({
       title: "Crop Inserted",
       message: "Crop has been inserted successfully!",
@@ -279,76 +339,29 @@ app.post("/add_crop", async (req, res) => {
         seller_email: sell_register.seller_email,
       }
     );
-
     await connection.commit();
-
     notifier.notify({
       title: "Crop Updated",
       message: "Crop quantity has been updated successfully!",
     });
   }
-
   res.redirect("/seller_view");
   await connection.close();
 });
 
-app.post("/clearAdminSession", (req, res) => {
-  delete req.session.isAdminLoggedIn;
-  delete req.session.adminType;
-  res.sendStatus(200);
-});
-
-app.post("/clearsellersession", (req, res) => {
-  delete req.session.issellerLoggedIn;
-  delete req.session.sellerType;
-  res.sendStatus(200);
-});
-
-app.post("/clearbuyersession", (req, res) => {
-  delete req.session.isbuyerLoggedIn;
-  delete req.session.buyerType;
-  res.sendStatus(200);
-});
-
-function requireAdmin(req, res, next) {
-  const value = localStorage.getItem('adminemial');
-  if (value === null) {
-    res.redirect("/adminlogin");
-} else {
-  next();
-}
-}
-
-function requireseller(req, res, next) {
-  const value = localStorage.getItem('selleremial');
-  if (value === null) {
-    res.redirect("/seller_login");
-} else {
-  next();
-}
-}
-
-function requirebuyer(req, res, next) {
-  const value = localStorage.getItem('buyeremial');
-  if (value === null) {
-    res.redirect("/buyer_login");
-} else {
-  next();
-}
-}
-
+//CONVERT ITNO DESIRE JSON BECAUSE SOME TIME WHEN DATABASE DATA IS EIDT THEN
+//IT NOT RETURN THE DESRIRE FOMRTAE JSON
 function convertJsonStructure(jsonData) {
-  // Check if the JSON is already in the desired format
   if (Array.isArray(jsonData) && jsonData.length > 0 && Array.isArray(jsonData[0])) {
-    // JSON is already in the desired format, return it as is
     return jsonData;
   } else {
-    // JSON needs conversion
     return jsonData.map(item => {
       return [item.CROPID, item.NAME, item.CATEGORY, item.PRICE, item.QUANTITY, item.SELLER_EMAIL];
     });
   }
 }
+
+//GET FRUITES CATEGORY CROPS DATA
 app.get("/fruit_detail/page", requirebuyer, async (req, resp) => {
   const connection = await connectToDatabase();
   const result = await connection.execute(
@@ -358,6 +371,7 @@ app.get("/fruit_detail/page", requirebuyer, async (req, resp) => {
   resp.send(result2);
 });
 
+//GET VEGETABLE CATEGORY CROPS DATA
 app.get("/vegitable_detail/page", requirebuyer, async (req, resp) => {
   const connection = await connectToDatabase();
   const result = await connection.execute(
@@ -367,6 +381,7 @@ app.get("/vegitable_detail/page", requirebuyer, async (req, resp) => {
   resp.send(result2);
 });
 
+//GET GRAIN CATEGRORY CROPS DATA
 app.get("/grains_detail/page", requirebuyer, async (req, resp) => {
   const connection = await connectToDatabase();
   const result = await connection.execute(
@@ -379,12 +394,9 @@ app.get("/grains_detail/page", requirebuyer, async (req, resp) => {
 
 
 function convertToQuerycategory(jsonData) {
-  // Check if the JSON data is already in the desired format
   if (Array.isArray(jsonData) && Array.isArray(jsonData[0])) {
     return jsonData;
   }
-
-  // Convert JSON data to the desired format
   const result = jsonData.map(item => {
     return [
       item.CROPID,
@@ -396,9 +408,10 @@ function convertToQuerycategory(jsonData) {
       item.SELLER_EMAIL
     ];
   });
-
   return result;
 }
+
+//GET THE GIVEN SPEFIC CATEGORY DATA WITH SELLER DATA
 app.get("/person_category", async (req, res) => {
   let connection;
   let { cropname, category, cropimage } = req.query;
@@ -424,9 +437,9 @@ app.get("/person_category", async (req, res) => {
   console.log("Query executed successfully. Rows:", result2);
 });
 
-// Database ADmin
+//################################ ADMIN DASHBOARD CODE ###################################
 
-// Function to fetch table data
+//GET ALL TBALE DATA WHICH IS REQURED IN AMDIN DASHBOARD
 async function fetchTableData() {
   try {
     oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
@@ -440,9 +453,7 @@ async function fetchTableData() {
     const crop_data = await connection.execute(
       `SELECT * FROM CROPDATA ORDER BY CROPID`
     );
-
     await connection.close();
-
     const result = {
       BUYER_DATA: buyer_data.rows,
       BUYER_COUNT: buyer_data.rows.length,
@@ -451,7 +462,6 @@ async function fetchTableData() {
       CROP_DATA: crop_data.rows,
       CROP_COUNT: crop_data.rows.length,
     };
-
     return result;
   } catch (err) {
     console.error("Error:", err);
@@ -470,17 +480,10 @@ app.get("/getTableData", async (req, res) => {
   }
 });
 
-// Route to serve the table data
-app.get("/getTableData", async (req, res) => {
-  try {
-    const tableData = await fetchTableData();
-    res.json(tableData);
-  } catch (error) {
-    console.error("Error fetching tableData:", error);
-    res.status(500).send("Internal Server Error");
-  }
-});
 
+//############################ SELLING CROPS CODE AND ADD TO CARD CODE###################################
+
+//GET DETAL SCREEN OF CROP DATA
 let cropData = null;
 app.post("/test", (req, res) => {
   cropData = req.body.cropData;
@@ -489,6 +492,7 @@ app.post("/test", (req, res) => {
   console.log("Received crop image:", req.session.curentcropimage);
   res.send({ cropData, cropImage: req.session.curentcropimage });
 });
+
 
 app.get("/addcard", (req, res) => {
   console.log("Session crop image:", req.session.cropimage);
@@ -503,6 +507,7 @@ app.get("/addcard", (req, res) => {
   }
 });
 
+//CONVERT INTO DESIRE FORMATE OF DATA
 function ensureArrayFormat(result) {
   const metaData = result.metaData;
   const rows = result.rows;
@@ -518,6 +523,7 @@ function ensureArrayFormat(result) {
   return result;
 }
 
+//WHEN ADD TO CARD THE QUANTITY MUST DESCREASE
 async function lessquantity(cropid, quan) {
   const connection = await connectToDatabase();
   try {
@@ -527,12 +533,7 @@ async function lessquantity(cropid, quan) {
     );
     result = ensureArrayFormat(result);
     const updatequantity = result.rows[0][0];
-    const a = parseInt(updatequantity) - parseInt(quan);
-    console.log(result);
-    console.log(updatequantity);
-    console.log("dakh la bhi");
-    console.log(a);
-  
+    const a = parseInt(updatequantity) - parseInt(quan);  
     console.log("Current Quantity:", updatequantity);
     await connection.execute(
       `UPDATE CROPDATA SET QUANTITY = :quantity WHERE CROPID = :cropid`,
@@ -547,6 +548,8 @@ async function lessquantity(cropid, quan) {
     await connection.close();
   }
 }
+
+//INCREASE QUNCTITY WHEN THE DELETE CARDS
 async function lessquantity2(cropid, quan) {
   const connection = await connectToDatabase();
   try {
@@ -557,18 +560,11 @@ async function lessquantity2(cropid, quan) {
     result = ensureArrayFormat(result);
     const updatequantity = result.rows[0][0];
     const a = parseInt(updatequantity) + parseInt(quan);
-    console.log(result);
-    console.log(updatequantity);
-    console.log("dakh la bhi");
-    console.log(a);
-  
-    console.log("Current Quantity:", updatequantity);
     await connection.execute(
       `UPDATE CROPDATA SET QUANTITY = :quantity WHERE CROPID = :cropid`,
       { quantity: a, cropid: cropid }
     );
     await connection.commit();
-    // console.log(a);
   } catch (error) {
     console.log("ham sa na ho paiga  QUANITY increase");
     console.log(error);
@@ -577,7 +573,7 @@ async function lessquantity2(cropid, quan) {
   }
 }
 
-
+//ADD TO CARD ITEMS FUNCTION
 async function addcarditem(carditem) {
   const connection = await connectToDatabase();
   try {
@@ -592,6 +588,7 @@ async function addcarditem(carditem) {
   }
 }
 
+//ADD TO CARD API
 app.post("/cadsdata", (req, res) => {
   const requestData = req.body;
   console.log("Received data:", requestData);
@@ -603,7 +600,6 @@ app.post("/cadsdata", (req, res) => {
     amount: requestData.amount,
     buyeremial: buyeremail,
   };
-
   console.log(carditem);
   lessquantity(carditem.cropid, carditem.quantity);
   addcarditem(carditem)
@@ -615,6 +611,10 @@ app.post("/cadsdata", (req, res) => {
     );
 });
 
+//########################## BUYER DASHBOARD ####################################
+//###############################################################################
+
+//FUNCTION OF GET DATA OF BUYER THAT CROP HAS BEEN BOUGHT
 async function getdataofbuybuyer(buyeremail) {
   try {
       oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
@@ -632,6 +632,7 @@ async function getdataofbuybuyer(buyeremail) {
   }
 }
 
+//GET THE BUYER DATA THAT CROP HAS BEEN ORDERED
 async function getdataoforderbuyer(buyeremail) {
   try {
       oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
@@ -648,6 +649,8 @@ async function getdataoforderbuyer(buyeremail) {
       throw error;
   }
 }
+
+//GET THE DATA OF THAT CROP HAS BEEN CARDED 
 async function getdataofcardbuyer(buyeremail) {
   try {
       oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
@@ -665,6 +668,7 @@ async function getdataofcardbuyer(buyeremail) {
   }
 }
 
+//GET API OF ALL DATA OF BUYER DASHBOARD
 app.get('/buyer_card_table',async (req,resp)=>{
   const buyeremail = localStorage.getItem('buyeremial');
   const  resultcard = await  getdataofcardbuyer(buyeremail);
@@ -674,6 +678,7 @@ app.get('/buyer_card_table',async (req,resp)=>{
   resp.json(buyerdashboardata);
 });
 
+//DELETE CARD API
 async function deletecard(cardid) {
   const connection = await connectToDatabase();
   try {
@@ -687,6 +692,7 @@ async function deletecard(cardid) {
   }
 }
 
+//API OF DLEETE THE CARD
 app.post('/buyer_card_table', async (req, resp) => {
   const { cardId, cropId, quantity } = req.body;
   try {
@@ -699,6 +705,7 @@ app.post('/buyer_card_table', async (req, resp) => {
   }
 });
 
+//FUCNTION OF CONFIRM THE CARD TO ORDER
 async function cardtoorderAPI(req) {
   const buyeremail = localStorage.getItem('buyeremial');
   const connection = await connectToDatabase();
@@ -710,6 +717,7 @@ async function cardtoorderAPI(req) {
   console.log('Order status updated');
 }
 
+//API OF CONFIRMED THE CARD TO ORDER
 app.get('/confirmend_card', async (req, res) => {
   try {
     console.log('Received /confirmend_card request');
@@ -721,8 +729,9 @@ app.get('/confirmend_card', async (req, res) => {
   }
 });
 
+//FUNCTION OF SELLER GET ALL THE AVIALBLE CROPS
 async function getCropOfSeller() {
-  const sellerEmail = localStorage.getItem('selleremial'); // Ensure correct key
+  const sellerEmail = localStorage.getItem('selleremial');
   try {
     oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
     const connection = await connectToDatabase();
@@ -730,10 +739,8 @@ async function getCropOfSeller() {
       `SELECT CROPID, NAME, CATEGORY, PRICE, QUANTITY, SELLER_EMAIL
        FROM cropdata
        WHERE SELLER_EMAIL = :sellerEmail AND QUANTITY != 0`,
-      { sellerEmail }  // Use bind variable for security
+      { sellerEmail }  
     );
-
-    // Transforming result to match specified JSON structure
     const cropdata = result.rows.map(row => ({
       CROPID: row.CROPID,
       NAME: row.NAME,
@@ -750,9 +757,9 @@ async function getCropOfSeller() {
   }
 }
 
-
+//GET THE ORDER CROPS DATA OF SELLER
 async function getOrderDataForSeller() {
-  const sellerEmail = localStorage.getItem('selleremial'); // Assuming 'selleremail' is correct spelling
+  const sellerEmail = localStorage.getItem('selleremial'); 
   try {
     oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
     const connection = await connectToDatabase();
@@ -765,10 +772,8 @@ async function getOrderDataForSeller() {
        JOIN seller_data sd ON cd.seller_email = sd.email
        JOIN buyerdata bd ON ci.buyer_email = bd.BUYER_EMAIL
        WHERE sd.email = :sellerEmail AND ci.STATUS = 'ORDER'`,
-      { sellerEmail }  // Bind variable
+      { sellerEmail } 
     );
-
-    // Transforming result to match specified JSON structure
     const orderdata = result.rows.map(row => ({
       CROPNAME: row.CROPNAME,
       QUANTITY: row.QUANTITY,
@@ -779,9 +784,8 @@ async function getOrderDataForSeller() {
       BUYER_CITY: row.BUYER_CITY,
       BUYER_EMAIL: row.BUYER_EMAIL,
       CONFIRMED: row.CONFIRMED,
-      CRAD_ID: row.CRAD_ID // Adding CRAD_ID to match the structure
+      CRAD_ID: row.CRAD_ID 
     }));
-
     return { orderdata };
   } catch (error) {
     console.error('Error executing query:', error.message, error.stack);
@@ -789,8 +793,9 @@ async function getOrderDataForSeller() {
   } 
 }
 
+//GET THE SOLD CROPS DATA OF THE BUYER
 async function getSoldDataForSeller() {
-  const sellerEmail = localStorage.getItem('selleremial'); // Ensure correct key
+  const sellerEmail = localStorage.getItem('selleremial');
   try {
     oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
     const connection = await connectToDatabase();
@@ -803,10 +808,8 @@ async function getSoldDataForSeller() {
        JOIN seller_data sd ON cd.seller_email = sd.email
        JOIN buyerdata bd ON ci.buyer_email = bd.BUYER_EMAIL
        WHERE sd.email = :sellerEmail AND ci.STATUS = 'SOLD'`,
-      { sellerEmail }  // Use bind variable for security
+      { sellerEmail }
     );
-
-    // Transforming result to match specified JSON structure
     const orderdata = result.rows.map(row => ({
       CRAD_ID: row.CRAD_ID,
       CROPNAME: row.CROPNAME,
@@ -818,7 +821,6 @@ async function getSoldDataForSeller() {
       BUYER_EMAIL: row.BUYER_EMAIL,
       CONFIRMED: row.CONFIRMED
     }));
-
     return { orderdata };
   } catch (error) {
     console.error('Error executing query:', error.message, error.stack);
@@ -826,7 +828,7 @@ async function getSoldDataForSeller() {
   } 
 }
 
-
+//GET API OF SELLER DASHBAORD WHICH 
 app.get('/seller_dasbaord_data',requireseller,async (req,resp)=>{
   const cropdata = await getCropOfSeller();
   const orderdata = await getOrderDataForSeller();
@@ -835,8 +837,7 @@ app.get('/seller_dasbaord_data',requireseller,async (req,resp)=>{
   resp.json(seller_dash);
 })
 
-
-
+//CONFIREMD ORDER FUNCTION
 async function ordertosold(cardid) {
   const connection = await connectToDatabase();
   await connection.execute(
@@ -847,12 +848,12 @@ async function ordertosold(cardid) {
   console.log('Order status updated');
 }
 
+//CONFIRMED ORDER API
 app.post('/confirmend_order', async (req, res) => {
   const { cradId } = req.body;
   if (!cradId) {
       return res.status(400).send('CRAD_ID is required');
   }
-
   try {
       await ordertosold(cradId);
       res.status(200).send('Order confirmed');
@@ -862,8 +863,7 @@ app.post('/confirmend_order', async (req, res) => {
   }
 });
 
-
-
+//CANCEL ORDER API
 app.post('/cancel_order', async (req, res) => {
   const data = req.body;
   try {
@@ -877,6 +877,7 @@ app.post('/cancel_order', async (req, res) => {
   }
 });
 
+//DELETE CROP API (IN WHICH WE QUANTITY = 0)
 async function deletecrop(cardid) {
 try {
   const connection = await connectToDatabase();
@@ -892,6 +893,7 @@ try {
 }
 }
 
+//API OF DLEETE THE CROP
 app.post('/delete_crop', async (req,resp)=>{
   const { cropId } = req.body;
   console.log('Received crop ID to delete:', cropId);
@@ -899,6 +901,7 @@ app.post('/delete_crop', async (req,resp)=>{
   resp.status(200).json({ message: 'Crop deleted successfully' });
 });
 
+//EIDT CROP'S DATA FUNCTION 
 async function editcrop(cropid,quantity,price) {
   try {
     const connection = await connectToDatabase();
@@ -914,6 +917,7 @@ async function editcrop(cropid,quantity,price) {
   }
   }
   
+  //EDIT CROP API
   app.post('/edit_crop', async (req,resp)=>{
     console.log(req.body);
     const eidtdata = {'cropid':req.body.cropId,
@@ -926,11 +930,300 @@ async function editcrop(cropid,quantity,price) {
   });
   
   
+
+//########################## CHAT FEATURE BACKEND CODE ##########################
+//###############################################################################
+
+//CONVERT THE DESIREFORMATE OF JSON
+const convertOrReturnJson = (json) => {
+  const isAlreadyConverted = json.every(item => typeof item === 'object' && 'email' in item && 'name' in item);
+  
+  if (isAlreadyConverted) {
+    return json;
+  } else {
+    const convertedJson = json.map(item => {
+      return {
+        email: item[0],
+        name: item[1]
+      };
+    });
+    return convertedJson;
+  }
+}
+
+//GET TEH BUYER CONTACT LIST IN SELLER CHAT PAGE
+async function getbuyercontact() {
+  const connection =await connectToDatabase();
+  const sellerEmail = localStorage.getItem('selleremial');
+  const result =  await connection.execute(
+    `select DISTINCT buyerdata.buyer_email,buyerdata.name from buyerdata, craditems where buyerdata.buyer_email = craditems.buyer_email and craditems.email = '${sellerEmail}'`,);
+  formattedData = convertOrReturnJson(result.rows);
+    return formattedData;
+}
+
+//API OF BUYER CONTACT LIST
+app.get('/buyer_contact', async (req, resp) => {
+  const data = await getbuyercontact();
+  resp.send(data);
+});
+
+//SELECT THE BUYER API OF CHATING
+app.post('/buyer_contact',async(req,resp)=>{
+  const buyer_email = req.body.buyerEmail;
+  console.log(buyer_email);
+  if (localStorage.getItem('curent_buyer_contact')) {
+    localStorage.removeItem('curent_buyer_contact');
+  }
+  localStorage.setItem('curent_buyer_contact', buyer_email);
+})
+
+//GET ALL MESSAGE OF SPEFIC BUYER
+async function getmessageseller() {
+  const connection = await connectToDatabase();
+  const sellerEmail = localStorage.getItem('selleremial');
+  const currentbuyerEmail = localStorage.getItem('curent_buyer_contact');
+  const result = await connection.execute(`SELECT MESSAGENO,MESSAGE,SENDEREMAIL,RECIEVEREMAIL
+FROM sendmessage 
+WHERE 
+    (SENDEREMAIL = '${currentbuyerEmail}' and RECIEVEREMAIL = '${sellerEmail}') or
+    (SENDEREMAIL = '${sellerEmail}' and RECIEVEREMAIL = '${currentbuyerEmail}')`);
+const messages = result.rows.map(row => ({
+  messageno: row[0],
+  message: row[1],
+  senderemail: row[2],
+  recieveremail: row[3]
+}));
+return messages;
+}
+
+async function sendmessageseller(message) {
+  const connection = await connectToDatabase();
+  const sellerEmail = localStorage.getItem('selleremial');
+  const currentbuyerEmail = localStorage.getItem('curent_buyer_contact');
+  const result = await connection.execute(`
+  INSERT INTO sendmessage (senderemail, recieveremail, message) 
+  VALUES ('${sellerEmail}', '${currentbuyerEmail}', '${message}')
+`);
+  await connection.commit();
+}
+
+//SEND MESSAGE API TO THE BUBYER
+app.post('/seller_chatpage_message', async (req, resp) => {
+  const message = req.body.message;
+  await sendmessageseller(message);
+});
+
+//GTE API OF MESSAGE OF SPDEFIC BUYER 
+app.get('/seller_chatpage_message',async(req,resp)=>{
+  const result1 = await getmessageseller();
+  const sellerEmail = localStorage.getItem('selleremial');
+  const currentbuyerEmail = localStorage.getItem('curent_buyer_contact');
+  const sendpropermessage = {messagelist:result1,selleremail:sellerEmail,buyeremail:currentbuyerEmail};
+  resp.send(sendpropermessage);
+})
+
+//############################# BUYER CAHT PAGE CODE ########################### 
+
+//GET SELLER CONTACT FUNCTION
+async function getsellercontact() {
+  const connection =await connectToDatabase();
+  const buyerEmail = localStorage.getItem('buyeremial');
+  let result =  await connection.execute(
+    `select DISTINCT seller_data.EMAIL,seller_data.NAME from seller_data, craditems where seller_data.EMAIL = craditems.EMAIL and craditems.BUYER_EMAIL = '${buyerEmail}'`,);
+  formattedData = convertOrReturnJson(result.rows)
+    return formattedData;
+}
+
+//GET SELLER CONTACT LIST
+app.get('/seller_contact', async (req, resp) => {
+  const data = await getsellercontact();
+  resp.send(data);
+});
+
+//SELECT THE SPECIFC SELLER FOR CHATING
+app.post('/seller_contact',async(req,resp)=>{
+  const buyer_email = req.body.buyerEmail;
+  console.log(buyer_email);
+  if (localStorage.getItem('curent_seller_contact')) {
+    localStorage.removeItem('curent_seller_contact');
+  }
+  localStorage.setItem('curent_seller_contact', buyer_email);
+})
+
+//GET MESSAGES OF SPEFIC BUYER FUNCTION
+async function getmessagebuyer() {
+  const connection = await connectToDatabase();
+  const buyerEmail = localStorage.getItem('buyeremial');
+  const currentsellerEmail = localStorage.getItem('curent_seller_contact');
+  const result = await connection.execute(`
+  SELECT MESSAGENO,MESSAGE,SENDEREMAIL,RECIEVEREMAIL
+  FROM sendmessage 
+  WHERE 
+      (SENDEREMAIL = '${currentsellerEmail}' and RECIEVEREMAIL = '${buyerEmail}') or
+      (SENDEREMAIL = '${buyerEmail}' and RECIEVEREMAIL = '${currentsellerEmail}')
+`);
+const messages = result.rows.map(row => ({
+  messageno: row[0],
+  message: row[1],
+  senderemail: row[2],
+  recieveremail: row[3]
+}));
+return messages;
+}
+
+//SEND MESSAGE FUNCTION TO THE SELLER
+async function sendmessagebuyer(message) {
+  const connection = await connectToDatabase();
+  const buyerEmail = localStorage.getItem('buyeremial');
+  const currentsellerEmail = localStorage.getItem('curent_seller_contact');
+  const result = await connection.execute(`
+  INSERT INTO sendmessage (senderemail, recieveremail, message) 
+  VALUES ('${buyerEmail}', '${currentsellerEmail}', '${message}')
+`);
+  await connection.commit();
+}
+
+//API OF SEND MESSAGE TO THE SELLER
+app.post('/buyer_chatpage_message', async (req, resp) => {
+  const message = req.body.message;
+  await sendmessagebuyer(message);
+});
+
+//GET API OF CHAT OF SPECIFIC BUYER
+app.get('/buyer_chatpage_message',async(req,resp)=>{
+  const result1 = await getmessagebuyer();
+  const buyerEmail = localStorage.getItem('buyeremial');
+  const currentsellerEmail = localStorage.getItem('curent_seller_contact');
+  const sendpropermessage = {messagelist:result1,selleremail:currentsellerEmail,buyeremail:buyerEmail};
+  resp.send(sendpropermessage);
+})
+
+//FIRST PAGE OF SELLER AND BUYER
+
+function transformData(data, key) {
+  if (Array.isArray(data) && Array.isArray(data[0]) && data[0].length > 0) {
+    if (data[0][0] === null) {
+      return [[0]];
+    }
+    return data;
+  }
+  if (Array.isArray(data) && data.length > 0 && data[0].hasOwnProperty(key)) {
+    return data.map(item => [item[key] === null ? 0 : item[key]]);
+  }
+  return data;
+}
+
+async function totalamoutofavailabe() {
+  const sellerEmail = localStorage.getItem('selleremial');
+  const connection = await connectToDatabase();
+let result = await  connection.execute(`SELECT SUM(PRICE * QUANTITY) AS TOTAL_AVAILABLE FROM cropdata WHERE SELLER_EMAIL = '${sellerEmail}'`);
+result = transformData(result.rows,"TOTAL_AVAILABLE");
+  return result[0][0];
+}
+
+async function numberofbuyer() {
+  const sellerEmail = localStorage.getItem('selleremial');
+  const connection = await connectToDatabase();
+let result = await  connection.execute(`SELECT COUNT(DISTINCT BUYER_EMAIL) AS DISTINCT_BUYER_COUNT FROM craditems WHERE email = '${sellerEmail}'`);
+result = transformData(result.rows,"DISTINCT_BUYER_COUNT");
+  return result[0][0];
+}
+
+async function totalamountorder(){
+  const sellerEmail = localStorage.getItem('selleremial');
+  const connection = await connectToDatabase();
+  let result = await  connection.execute(`select sum(amount) as total_order from craditems WHERE email = '${sellerEmail}' and  STATUS = 'ORDER'`);
+  result = transformData(result.rows,"TOTAL_ORDER");
+  return result[0][0];
+}
+
+async function totalamountsold(){
+  const sellerEmail = localStorage.getItem('selleremial');
+  const connection = await connectToDatabase();
+  let result = await  connection.execute(`select sum(amount) as total_sold from craditems WHERE email = '${sellerEmail}' and  STATUS = 'SOLD'`);
+  result = transformData(result.rows,"TOTAL_SOLD");
+  return result[0][0];
+}
+
+
+app.get('/seller_dashboard_first_page',async (req,resp)=>{
+  const totavailable = await totalamoutofavailabe();
+  const noofbuyer = await numberofbuyer();
+  const totalorder = await totalamountorder();
+  const totalsold = await totalamountsold();
+  var finalreuslt = {totalorder,noofbuyer,totalsold,totavailable};
+  resp.send(finalreuslt);
+});
+
+
+
+
+async function totalcardamount(){
+  const buyerEmail = localStorage.getItem('buyeremial');
+  const connection = await connectToDatabase();
+  let result = await  connection.execute(`select sum(amount) as total_card from craditems WHERE BUYER_EMAIL = '${buyerEmail}' and  STATUS = 'CARD'`);
+  result = transformData(result.rows,"TOTAL_CARD");
+  return result[0][0];
+}
+
+async function totalorderamountbuyer(){
+  const buyerEmail = localStorage.getItem('buyeremial');
+  const connection = await connectToDatabase();
+  let result = await  connection.execute(`select sum(amount) as TOTAL_ORDER_BUYER from craditems WHERE BUYER_EMAIL = '${buyerEmail}' and  STATUS = 'ORDER'`);
+  result = transformData(result.rows,"TOTAL_ORDER_BUYER");
+  return result[0][0];
+}
+
+async function totalboughtamountbuyer(){
+  const buyerEmail = localStorage.getItem('buyeremial');
+  const connection = await connectToDatabase();
+  let result = await  connection.execute(`select sum(amount) as TOTAL_BOUGHT_BUYER from craditems WHERE BUYER_EMAIL = '${buyerEmail}' and  STATUS = 'SOLD'`);
+  result = transformData(result.rows,"TOTAL_BOUGHT_BUYER");
+  return result[0][0];
+}
+
+async function numberofseller() {
+  const buyerEmail = localStorage.getItem('buyeremial');
+  const connection = await connectToDatabase();
+let result = await  connection.execute(`SELECT COUNT(DISTINCT EMAIL) AS DISTINCT_SELLER_COUNT FROM craditems WHERE BUYER_EMAIL = '${buyerEmail}'`);
+result = transformData(result.rows,"DISTINCT_BUYER_COUNT");
+  return result[0][0];
+}
+
+app.get('/buyer_dashboard_first_page',async (req,resp)=>{
+  const totalcard = await totalcardamount();
+  const totalorderbuyer = await totalorderamountbuyer();
+  const totalbought = await totalboughtamountbuyer();
+  const noseller = await numberofseller();
+  var finalreuslt = {totalcard,totalorderbuyer,totalbought,noseller};
+  resp.send(finalreuslt);
+});
+
+app.post('/camplain_buyers', async (req, resp) => {
+  const { message } = req.body;
+  console.log(message);
+  const connection = await connectToDatabase();
+  const buyerEmail = localStorage.getItem('buyeremial');
+  const result = await connection.execute(`
+  insert into complain (COMPLAIN_MESSAGE,SENDER_EMAIL,CATEGORY) values ('${message}','${buyerEmail}','buyer')`);
+  await connection.commit();
+  resp.status(200).json({ message: 'Complain submitted successfully' });
+});
+
+app.post('/seller_complain', async (req, resp) => {
+  const { message } = req.body;
+  console.log(message);
+  const connection = await connectToDatabase();
+  const sellerEmail = localStorage.getItem('selleremial');
+  const result = await connection.execute(`
+  insert into complain (COMPLAIN_MESSAGE,SENDER_EMAIL,CATEGORY) values ('${message}','${sellerEmail}','seller')`);
+  await connection.commit();
+  resp.status(200).json({ message: 'Complain submitted successfully' });
+});
+
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/", async (req, res) => {
-  localStorage.removeItem('adminemial');
-  localStorage.removeItem('buyeremial');
-  localStorage.removeItem('selleremial');
+
   res.sendFile(
     path.join(__dirname, "public", "HTML", "mainpages", "home.html")
   );
@@ -943,6 +1236,12 @@ app.get("/about", (req, res) => {
 app.get("/contact", (req, res) => {
   res.sendFile(
     path.join(__dirname, "public", "HTML", "mainpages", "contact.html")
+  );
+});
+
+app.get("/camplain_buyer", (req, res) => {
+  res.sendFile(
+    path.join(__dirname, "public", "HTML", "mainpages", "complain.html")
   );
 });
 
@@ -970,6 +1269,13 @@ app.get("/add_crop", requireseller, (req, res) => {
     path.join(__dirname, "public", "HTML", "sellingpages", "add_crop.html")
   );
 });
+
+app.get("/seller_complain", requireseller, (req, res) => {
+  res.sendFile(
+    path.join(__dirname, "public", "HTML", "sellingpages", "seller_complain.html")
+  );
+});
+
 app.get("/seller_view", requireseller, (req, res) => {
   res.sendFile(
     path.join(__dirname, "public", "HTML", "sellingpages", "seller_view.html")
@@ -978,13 +1284,14 @@ app.get("/seller_view", requireseller, (req, res) => {
 
 app.get("/seller_chatpage", requireseller, (req, res) => {
   res.sendFile(
-    path.join(__dirname, "public", "HTML", "sellingpages", "chatapp.html")
+    path.join(__dirname, "public", "HTML", "sellingpages", "sellerchatapp.html")
   );
 });
 
 
 //adminpages
 app.get("/adminlogin", (req, res) => {
+  localStorage.removeItem('adminemial');
   res.sendFile(
     path.join(__dirname, "public", "HTML", "adminpages", "adminlogin.html")
   );
@@ -1028,17 +1335,6 @@ app.get("/grain_detail",requirebuyer, (req, res) => {
     path.join(__dirname, "public", "HTML", "buyingpages", "grain.html")
   );
 });
-app.get("/buyer_dashboard",requirebuyer, (req, res) => {
-  res.sendFile(
-    path.join(
-      __dirname,
-      "public",
-      "HTML",
-      "buyingpages",
-      "buyer_dashboard.html"
-    )
-  );
-});
 
 app.get("/crop_data_according_to_person",requirebuyer, (req, res) => {
   const { cropname, category, cropimage } = req.query;
@@ -1066,7 +1362,12 @@ app.get("/card_data",requirebuyer, (req, res) => {
     path.join(__dirname, "public", "HTML", "buyingpages", "cards_data.html")
   );
 });
-
+app.get("/buyer_chat",requirebuyer, (req, res) => {
+  res.sendFile(
+    path.join(__dirname, "public", "HTML", "buyingpages", "buyer_chat.html")
+  );
+});  
 const server = app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}/`);
+  console.log("sajid");
 });

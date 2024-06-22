@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buyer Chat App</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        .sticky-header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 900;
+            background-color: rgb(220, 220, 220);
+        }
+        .header-info {
+            position: fixed;
+            top: 56px; /* Below the header */
+            width: 100%;
+            text-align: center;
+            background-color: rgb(220, 220, 220);
+            padding: 10px;
+            z-index: 999;
+        }
+        .sectionA {
+            display: flex;
+            height: 100%;
+            margin-top: 96px; /* Height of the header and info */
+        }
+        .contactlist {
+            width: 250px;
+            background-color: rgb(123, 123, 123);
+            padding: 10px;
+            overflow-y: auto;
+            position: fixed;
+            top: 96px; /* Below the header and info */
+            bottom: 0;
+        }
+        .message {
+            margin-top: 0;
+            margin-left: 250px; /* Width of the contact list */
+            flex-grow: 1;
+            background-color: rgb(245, 245, 245);
+            padding: 10px;
+            overflow-y: auto;
+            position: relative;
+        }
+        .contact-button {
+            display: block;
+            width: 100%;
+            margin: 5px 0;
+        }
+        .message-input-form {
+            position: fixed;
+            bottom: 0;
+            width: calc(100% - 250px); /* Subtract the width of the contact list */
+            background-color: white;
+            padding: 10px;
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .message-input {
+            width: 80%;
+            display: inline-block;
+        }
+        .send-button {
+            width: 18%;
+            display: inline-block;
+        }
+        .message-item {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+        }
+        .sent-message {
+            padding-left: 600px;
+        }
+        .received-message {
+            text-align: left;
+        }
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        .message-sender {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .message-timestamp {
+            color: #666;
+        }
+        .message-content {
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <div class="sticky-header">
+        <h2 class="text-center p-3">Seller Chat App</h2>
+    </div>
+    <br>
+    <div class="header-info" id="headerInfo">
+        <span id="sellerEmail">Seller Email: </span> | <span id="buyerEmail">Buyer Email: </span>
+    </div>
+    <div class="sectionA">
+        <div class="contactlist" id="contactlist">
+            <br>
+            <h4 style="color: aliceblue;">Seller Contact List</h4>
+        </div>
+        <div class="message" id="messageContainer">
+            <form class="message-input-form" id="messageForm">
+                <input type="text" class="form-control message-input" placeholder="Enter your message" id="messageInput">
+                <button type="submit" class="btn btn-primary send-button">Send</button>
+            </form>
+        </div>
+    </div>
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        async function fetchContacts() {
+            try {
+                const response = await fetch('/seller_contact');
+                const contacts = await response.json();
+                const contactListDiv = document.getElementById('contactlist');
+                contacts.forEach(contact => {
+                    const button = document.createElement('button');
+                    button.innerText = contact.name;
+                    button.classList.add('btn', 'btn-info', 'contact-button');
+                    button.onclick = async () => {
+                        await saveCurrentBuyer(contact.email);
+                        getMessages();
+                    };
+                    contactListDiv.appendChild(button);
+                });
+            } catch (error) {
+                console.error('Error fetching contacts:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchContacts();
+            getMessages(); // Fetch messages when the page loads
+        });
+
+        async function saveCurrentBuyer(buyerEmail) {
+            try {
+                await fetch('/seller_contact', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ buyerEmail })
+                });
+            } catch (error) {
+                console.error('Error saving current buyer:', error);
+            }
+        }
+
+        document.getElementById('messageForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const message = document.getElementById('messageInput').value;
+            if (message) {
+                sendMessage(message);
+                document.getElementById('messageInput').value = '';
+            }
+        });
+
+        async function sendMessage(message) {
+            try {
+                await fetch('/buyer_chatpage_message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message })
+                });
+
+                // Fetch updated message list after sending message
+                const messageList = await fetchMessages();
+                const response = await fetch('/buyer_chatpage_message');
+                const messageData = await response.json();
+                messageData.messagelist.sort((a, b) => b.messageno - a.messageno);
+                const sellerEmail = messageData.selleremail;
+
+                // Update UI with the updated message list
+                displayMessages(messageList, sellerEmail);
+
+            } catch (error) {
+                console.error('Error sending message:', error);
+            }
+        }
+
+        async function fetchMessages() {
+            try {
+                const response = await fetch('/buyer_chatpage_message');
+                const messageData = await response.json();
+                messageData.messagelist.sort((a, b) => b.messageno - a.messageno);
+
+                // Update header with seller and buyer emails
+                document.getElementById('sellerEmail').innerText = `Seller Email: ${messageData.selleremail}`;
+                document.getElementById('buyerEmail').innerText = `Buyer Email: ${messageData.buyeremail}`;
+
+                return messageData.messagelist;
+            } catch (error) {
+                console.error('Error fetching messages:', error);
+                return []; // Return empty array or handle error as per your application's logic
+            }
+        }
+
+        function displayMessages(messageList, buyeremail) {
+            const messageContainer = document.getElementById('messageContainer');
+            messageContainer.innerHTML = `
+                <form class="message-input-form" id="messageForm">
+                    <input type="text" class="form-control message-input" placeholder="Enter your message" id="messageInput">
+                    <button type="submit" class="btn btn-primary send-button">Send</button>
+                </form>
+            `;
+            messageList.forEach(msg => {
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('message-item');
+                if (msg.senderemail === buyeremail) {
+                    messageElement.classList.add('sent-message');
+                } else {
+                    messageElement.classList.add('received-message');
+                }
+                messageElement.innerHTML = `
+                    <div class="message-content">${msg.message}</div>
+                `;
+                messageContainer.appendChild(messageElement);
+            });
+            document.getElementById('messageForm').addEventListener('submit', function(event) {
+                event.preventDefault();
+                const message = document.getElementById('messageInput').value;
+                if (message) {
+                    sendMessage(message);
+                }
+            });
+        }
+
+        async function getMessages() {
+            try {
+                const messageList = await fetchMessages();
+                const response = await fetch('/buyer_chatpage_message');
+                const messageData = await response.json();
+                messageData.messagelist.sort((a, b) => b.messageno - a.messageno);
+                const buyeremail = messageData.buyeremail;
+                displayMessages(messageList, buyeremail);
+            } catch (error) {
+                console.error('Error getting and displaying messages:', error);
+            }
+        }
+    </script>
+</body>
+</html>

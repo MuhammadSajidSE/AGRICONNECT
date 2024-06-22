@@ -88,6 +88,40 @@
         .wide-button {
             width: 100px; /* Adjust this value to your desired width */
         }
+        .circle {
+            width: 170px;
+            height: 170px;
+            background-color: #87c1ff;
+            border-radius: 50%;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-left: 10px; /* Reduced from 20px to 10px */
+        }
+        
+        .circle-label {
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        
+        .circle-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        /* Arrange circles in rows */
+        .circle-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px; /* Adjust as needed */
+            margin-left: 100px;
+            margin-top: 100px;
+        }
     </style>
 </head>
 
@@ -101,8 +135,10 @@
                 <button class="btn" id="showOrderCropsBtn">Show Order Crops</button>
                 <button class="btn" id="showSoldCropsBtn">Show Sold Crops</button>
                 <button class="btn" id="sellerchat">Seller Chat</button>
+                <button class="btn" id="complain">Complain</button>
                 <button class="btn" id="logout">Log Out</button>
             </div>
+            <div id="circleSection" class="circle-container"></div>
             <div class="cardtable">
                 <table class="table table-striped" id="sellerDashboardTable" style="display: none;">
                     <thead>
@@ -115,6 +151,8 @@
                 <div class="total-amount" id="totalAmount" style="display: none;">Total Amount: $0</div>
                 <button class="btn btn-success confirm-btn" id="confirmBtn" style="display: none;">Confirm</button>
             </div>
+        </div>
+        </div>
         </div>
     </div>
 
@@ -130,15 +168,53 @@
                 return null;
             }
         }
-
+        document.addEventListener('DOMContentLoaded', async function () {
+            try {
+                const response = await fetch('/seller_dashboard_first_page');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch data');
+                }
+                const data = await response.json();
+                console.log('Fetched initial data:', data);
+        
+                // Clear previous circles
+                const circleSection = document.getElementById('circleSection');
+                circleSection.innerHTML = '';
+        
+                // Update circles with fetched data
+                updateCircle('Total Orders Amount', data.totalorder);
+                updateCircle('Number of Buyers', data.noofbuyer);
+                updateCircle('Total Sold Amount', data.totalsold);
+                updateCircle('Total Available Amount', data.totavailable);
+            } catch (error) {
+                console.error('Error fetching initial data:', error);
+                // Handle error
+            }
+        });
+        
+        
+        function updateCircle(label, value) {
+            const circleSection = document.getElementById('circleSection');
+        
+            const circle = document.createElement('div');
+            circle.classList.add('circle');
+            circle.innerHTML = `<div class="circle-label">${label}</div><div class="circle-value">${value}</div>`;
+        
+            circleSection.appendChild(circle);
+        }
+        function toggleCircleVisibility() {
+            const circleSection = document.getElementById('circleSection');
+            circleSection.style.display = 'none';
+        }
         function createTableHeader(dataType) {
+            toggleCircleVisibility()
             const tableHeader = document.getElementById('tableHeader');
             tableHeader.innerHTML = '';
             let headers = [];
             if (dataType === 'Crop') {
                 headers = ['Crop Id', 'Name', 'Category', 'Price', 'Quantity',  'Edit Price','Edit Quantity', 'Edit', 'Delete'];
             } else if (dataType === 'order') {
-                headers = ['Crop Name', 'Quantity', 'Amount', 'Buyer Name', 'Buyer Phone No', 'Buyer City', 'Buyer Email', 'Confirmed', 'Cancel'];
+                headers = ['Crop Name', 'Quantity', 'Amount', 'Buyer Name', 'Phone No', 'Buyer City', 'Buyer Email', 'Confirmed', 'Cancel'];
             } else if (dataType === 'sold') {
                 headers = ['Crop Name', 'Quantity', 'Amount', 'Buyer Name', 'Buyer Phone No', 'Buyer City', 'Buyer Email'];
             }
@@ -269,7 +345,7 @@
                 console.log(cropId, price, quantity);
                 if (response.ok) {
                     const responseData = await response.json();
-                    alert(responseData.message); // Show the success message from the backend
+            
                     displayData('Crop');
                 } else {
                     const errorData = await response.json();
@@ -390,6 +466,9 @@
 
         document.getElementById('logout').onclick = function () {
             // Logic to log out
+        };
+        document.getElementById('complain').onclick = function () {
+            window.location.href = 'seller_complain';
         };
     </script>
 
