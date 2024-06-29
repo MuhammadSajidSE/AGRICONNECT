@@ -54,11 +54,21 @@
         h4 {
             color: rgb(255, 173, 72);
         }
+
+        .dashboard-button {
+            display: block;
+            margin: 20px auto;
+            width: 200px;
+            border-radius: 20px;
+            height: 40px;
+        }
     </style>
 </head>
 
 <body>
     <div id="cardContainer"></div>
+    <button type="button" class="btn btn-success dashboard-button" onclick="gotoDashboard()">Go to Dashboard</button>
+
     <script>
         let crop = {};
         window.onload = async () => {
@@ -161,6 +171,10 @@
                     alert("Error sending data to server");
                 }
             }
+        }
+
+        function gotoDashboard() {
+            window.location.href = '/card_data';
         }
     </script>
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>

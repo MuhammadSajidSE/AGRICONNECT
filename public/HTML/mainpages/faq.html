@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&family=Quicksand:wght@300..700&family=Reddit+Mono:wght@200..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/CSS/mainpages/home.css">
+    <script src="/JS/mainpages/home.js" defer></script>
+    <title>Document</title>
+    <style>
+        body {
+            font-family: 'Oswald', sans-serif;
+        }
+
+        main {
+            padding: 2rem;
+        }
+
+        .faq-section {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .faq-item {
+            margin-bottom: 2rem;
+        }
+
+        .faq-question {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: #4CAF50;
+            cursor: pointer;
+        }
+
+        .faq-answer {
+            display: none;
+            padding-left: 1rem;
+        }
+
+        .faq-answer.active {
+            display: block;
+        }
+
+        .faq-answer p {
+            font-size: 1.1rem;
+            color: #666;
+        }
+
+        footer {
+            background-color: #333;
+            color: #fff;
+            padding: 2rem 0;
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        .footer-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-title {
+            font-size: 1.5rem;
+            color: #4CAF50;
+            margin-bottom: 1rem;
+        }
+
+        .footer-links a {
+            color: #ddd;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: #4CAF50;
+        }
+
+        .social-icons a {
+            display: inline-block;
+            margin-right: 1rem;
+            color: #ddd;
+            font-size: 1.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .social-icons a:hover {
+            color: #4CAF50;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-white nav-stick">
+        <div style="margin-left: 10rem;"></div>
+        <a class="navbar-brand" href="#"><img src="/images/company_logo.png" alt="" width="350px" height="70px"></a>
+        <div style="margin-left: 10rem;"></div>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="/" style="color: #74ab4e;">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="/seller_register" style="color: gray;">Selling</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="/buyer_register" style="color: gray;">Buying</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="/adminlogin" style="color: gray;">Admin</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="/about" id="navbarDropdown" role="button"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        About Us
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <li><a class="dropdown-item" href="/company">Our Company</a></li>
+                        <li><a class="dropdown-item" href="/people">Our People</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="/faq">FAQ</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <main>
+        <section class="faq-section">
+            <h2>Frequently Asked Questions</h2>
+
+            <div class="faq-item">
+                <h3 class="faq-question">What payment methods do you accept?</h3>
+                <div class="faq-answer">
+                    <p>We accept all major credit and debit cards, as well as PayPal.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <h3 class="faq-question">How do I contact customer support?</h3>
+                <div class="faq-answer">
+                    <p>You can reach our customer support team via email at support@agrimarketplace.com or by phone at +1-123-456-7890.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <h3 class="faq-question">Do you offer international shipping?</h3>
+                <div class="faq-answer">
+                    <p>Yes, we offer international shipping to most countries. Shipping rates may vary.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <h3 class="faq-question">Can I return or exchange an item?</h3>
+                <div class="faq-answer">
+                    <p>Yes, we have a flexible return and exchange policy. Please refer to our <a href="#">returns policy</a> for more details.</p>
+                </div>
+            </div>
+
+            <!-- Add more FAQ items as needed -->
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 footer-section">
+                    <h4 class="footer-title">Contact Us</h4>
+                    <p>Email: support@agrimarketplace.com</p>
+                    <p>Phone: +1-123-456-7890</p>
+                    <p>Address: 123 Agri Street, Farmville, USA</p>
+                </div>
+                <div class="col-md-4 footer-section">
+                    <h4 class="footer-title">Quick Links</h4>
+                    <div class="footer-links">
+                        <a href="/about">About Us</a>
+                        <a href="/faq">FAQ</a>
+                        <a href="/terms">Terms & Conditions</a>
+                        <a href="/privacy">Privacy Policy</a>
+                    </div>
+                </div>
+                <div class="col-md-4 footer-section">
+                    <h4 class="footer-title">Follow Us</h4>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 text-center">
+                    <p>&copy; 2024 Agri Marketplace. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Font Awesome Icons -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"
+        integrity="sha512-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        crossorigin="anonymous" defer></script>
+
+    <script>
+        // JavaScript to handle the accordion functionality
+        const faqQuestions = document.querySelectorAll('.faq-question');
+
+        faqQuestions.forEach(question => {
+            question.addEventListener('click', () => {
+                // Toggle the active class on the answer to show/hide it
+                question.nextElementSibling.classList.toggle('active');
+            });
+        });
+    </script>
+</body>
+
+</html>
