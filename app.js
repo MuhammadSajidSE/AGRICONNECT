@@ -12,8 +12,8 @@ const localStorage = new LocalStorage('./scratch');
 const app = express(); 
 const port = 3001;
 
-
-// ###################CONNECTIONS##############################
+//##########################################################################################
+//################################ CONNECTIONS##############################################
 
 app.use(bodyParser.json());
 app.use(express.json());
@@ -35,9 +35,8 @@ async function connectToDatabase() {
   return connection;
 }
 
-//########################################################################################
-//##############################Authentication FUNCTION###################################
-
+//##########################################################################################
+//############################## Authentication FUNCTION ###################################
 
 //CHECK BUYER EMAIL IS ALREADY EXIST OR NOT
 async function checkEmailExistbuyer(email) {
@@ -135,7 +134,7 @@ function requirebuyer(req, res, next) {
 }
 }
 //########################################################################################
-//##############################Authentication API###################################
+//##############################Authentication API########################################
 
 //BUYER REGISTER POST API
 app.post("/buyer_register", async (req, res) => {
@@ -438,7 +437,6 @@ app.get("/person_category", async (req, res) => {
 });
 
 //################################ ADMIN DASHBOARD CODE ###################################
-
 //GET ALL TBALE DATA WHICH IS REQURED IN AMDIN DASHBOARD
 async function fetchTableData() {
   try {
@@ -481,8 +479,7 @@ app.get("/getTableData", async (req, res) => {
 });
 
 
-//############################ SELLING CROPS CODE AND ADD TO CARD CODE###################################
-
+//############################ SELLING CROPS CODE AND ADD TO CARD CODE ###################################
 //GET DETAL SCREEN OF CROP DATA
 let cropData = null;
 app.post("/test", (req, res) => {
@@ -492,7 +489,6 @@ app.post("/test", (req, res) => {
   console.log("Received crop image:", req.session.curentcropimage);
   res.send({ cropData, cropImage: req.session.curentcropimage });
 });
-
 
 app.get("/addcard", (req, res) => {
   console.log("Session crop image:", req.session.cropimage);
@@ -1155,9 +1151,6 @@ app.get('/seller_dashboard_first_page',async (req,resp)=>{
   resp.send(finalreuslt);
 });
 
-
-
-
 async function totalcardamount(){
   const buyerEmail = localStorage.getItem('buyeremial');
   const connection = await connectToDatabase();
@@ -1221,6 +1214,7 @@ app.post('/seller_complain', async (req, resp) => {
   resp.status(200).json({ message: 'Complain submitted successfully' });
 });
 
+
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/", async (req, res) => {
 
@@ -1228,14 +1222,19 @@ app.get("/", async (req, res) => {
     path.join(__dirname, "public", "HTML", "mainpages", "home.html")
   );
 });
-app.get("/about", (req, res) => {
+app.get("/company", (req, res) => {
   res.sendFile(
-    path.join(__dirname, "public", "HTML", "mainpages", "about.html")
+    path.join(__dirname, "public", "HTML", "mainpages", "company.html")
   );
 });
-app.get("/contact", (req, res) => {
+app.get("/faq", (req, res) => {
   res.sendFile(
-    path.join(__dirname, "public", "HTML", "mainpages", "contact.html")
+    path.join(__dirname, "public", "HTML", "mainpages", "faq.html")
+  );
+});
+app.get("/people", (req, res) => {
+  res.sendFile(
+    path.join(__dirname, "public", "HTML", "mainpages", "people.html")
   );
 });
 
@@ -1367,7 +1366,9 @@ app.get("/buyer_chat",requirebuyer, (req, res) => {
     path.join(__dirname, "public", "HTML", "buyingpages", "buyer_chat.html")
   );
 });  
+
 const server = app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}/`);
   console.log("sajid");
 });
+

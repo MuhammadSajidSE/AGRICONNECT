@@ -17,7 +17,79 @@
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&family=Quicksand:wght@300..700&family=Reddit+Mono:wght@200..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/CSS/mainpages/home.css">
     <script src="/JS/mainpages/home.js" defer></script>
-    <title>Document</title>
+    <title>About People</title>
+    <style>
+        .main-content {
+            padding: 2rem 0;
+        }
+
+        .content {
+            background-color: #fff;
+            padding: 2rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .content h3 {
+            color: #4CAF50;
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .content p {
+            font-size: 1.1rem;
+            color: #4CAF40;
+            margin-bottom: 1.5rem;
+        }
+
+        main {
+            background-color: #f9f9f9;
+            padding: 2em 0;
+            border-bottom: 2px solid #4CAF50;
+        }
+
+        .team-members {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+
+        .team-member {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 1em;
+            padding: 1.5em;
+            text-align: center;
+            width: 320px;
+            border: 2px solid #4CAF50;
+        }
+
+        .team-member img {
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            margin-bottom: 1em;
+        }
+
+        .team-member h2 {
+            color: #4CAF50;
+            margin-bottom: 0.5em;
+        }
+
+        .team-member p {
+            color: #666;
+            margin-bottom: 1em;
+        }
+
+        .main-content header {
+            color: black;
+            text-align: center;
+            margin-bottom: 1rem; 
+            margin-top: -50px;
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-white nav-stick">
@@ -59,13 +131,37 @@
             </ul>
         </div>
     </nav>
-    <div class="background-image">
-        <div class="overlay-text">
-            <h1>A B2B Digital Marketplace Were Fair Food </h1>
-          <h1> Trade Is Made Easy, Fast And Transprant!</h1>
-            <p>Some additional text can go here.</p>
-        </div>
-    </div>
+    
+  <main>
+    <section class="main-content">
+      <header>
+        <h1>Meet the Team</h1>
+      </header>
+      
+      <div class="team-members">
+        <section class="team-member">
+          <img src="/images/jhanzaibb.jpeg" alt="Jhanzaib Habib">
+          <h2>Jhanzaib Habib</h2>
+          <p>Backend Developer</p>
+          <p>Excellent command on backend with efficiency in node.js</p>
+        </section>
+        
+        <section class="team-member">
+          <img src="/images/sajid.jpeg" alt="Muhammad Sajid">
+          <h2>Muhammad Sajid</h2>
+          <p>Backend Developer</p>
+          <p>Excellent command on backend with efficiency in node.js</p>
+        </section>
+        
+        <section class="team-member">
+          <img src="/images/huzaifa.jpeg" alt="Huzaifa Ali Siddiqui">
+          <h2>Huzaifa Ali</h2>
+          <p>Frontend+Backend Developer</p>
+          <p>Skilled in backend architecture and database management.</p>
+        </section>
+        <!-- Add more team members as needed -->
+      </div>
+    </section>
+  </main>
 </body>
-
 </html>
